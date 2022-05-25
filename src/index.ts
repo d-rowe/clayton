@@ -10,8 +10,17 @@ const renderer = new Renderer({
     onClick: console.log,
 });
 
+window.renderer = renderer;
 
-setInterval(() => {
-    renderer.addKeysLeft(1);
-    renderer.addKeysRight(1);
-}, 2000);
+(async () => {
+    while (true) {
+        renderer.addKeysLeft(10);
+        renderer.addKeysRight(10);
+        renderer.setMidiView(60, 72);
+        await delay(500);
+    }
+})();
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

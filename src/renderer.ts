@@ -1,6 +1,7 @@
 import {
     getClosestDiatonicLeft,
     getClosestDiatonicRight,
+    getDiatonicRange,
     isDiatonic
 } from './TheoryUtils';
 
@@ -53,6 +54,17 @@ export default class Renderer {
         }
     }
 
+    setMidiView(midiStart: number, midiEnd: number) {
+        const viewableDiatonicRange = getDiatonicRange(midiStart, midiEnd);
+        const totalDiatonicRange = getDiatonicRange(this.midiStart, this.midiEnd);
+        const widthPercentage = (totalDiatonicRange / viewableDiatonicRange) * 100;
+        this.setWidth(widthPercentage + '%');
+        const containerRect = this.pianoContainer.getBoundingClientRect();
+        const targetDiatonicKeyWidth = containerRect.width / viewableDiatonicRange;
+        const scrollX = getDiatonicRange(this.midiStart, midiStart) * targetDiatonicKeyWidth;
+        this.scrollToX(scrollX);
+    }
+
     addKeysLeft(keyCount: number) {
         const start = getClosestDiatonicLeft(this.midiStart - keyCount);
         const end = this.midiStart;
@@ -83,6 +95,10 @@ export default class Renderer {
 
     setWidth(width: string) {
         this.keysContainer.style.width = width;
+    }
+
+    clearInvisibleKeys() {
+        // TODO: implement
     }
 
     private constructKeysFragment(midiStart: number, midiEnd: number): DocumentFragment {
@@ -124,5 +140,13 @@ export default class Renderer {
         const keyElement = this.createKeyElementGeneric(midi);
         keyElement.classList.add('piano-key-accidental');
         return keyElement;
+    }
+
+    enableWidthAnimation() {
+        this.keysContainer.style.transition = 'width 200ms ease-in-out';
+    }
+
+    disableWidthAnimation() {
+        this.keysContainer.style.transition = '';
     }
 }
