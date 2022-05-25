@@ -14,10 +14,12 @@ window.renderer = renderer;
 
 (async () => {
     while (true) {
-        renderer.addKeysLeft(10);
-        renderer.addKeysRight(10);
-        renderer.setMidiView(60, 72);
-        await delay(500);
+        await delay(1000);
+        renderer.setRange(48, 72);
+        renderer.setMidiView(48, 60);
+        await delay(1000);
+        renderer.setRange(36, 72);
+        renderer.setMidiView(48, 60);
     }
 })();
 

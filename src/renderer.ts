@@ -24,12 +24,16 @@ export default class Renderer {
     private options: Options;
     private midiStart: number;
     private midiEnd: number;
+    private midiViewStart: number;
+    private midiViewEnd: number;
 
     constructor(options: Options) {
         this.options = options;
         this.container = options.container;
         this.midiStart = getClosestDiatonicLeft(options.midiStart ?? DEFAULT_MIDI_START);
         this.midiEnd = getClosestDiatonicRight(options.midiEnd ?? DEFAULT_MIDI_END);
+        this.midiViewStart = this.midiStart;
+        this.midiViewEnd = this.midiEnd;
 
         this.pianoContainer = document.createElement('div');
         this.pianoContainer.onclick = this.onClick.bind(this);
@@ -44,7 +48,7 @@ export default class Renderer {
 
     onClick(event: MouseEvent) {
         const keyElement = event.target as HTMLDivElement;
-        const {midi} = keyElement.dataset;
+        const { midi } = keyElement.dataset;
         if (midi === undefined) {
             return;
         }
@@ -54,8 +58,27 @@ export default class Renderer {
         }
     }
 
+    setRange(midiStart: number, midiEnd: number) {
+        const leftKeyCount = this.midiStart - midiStart;
+        const rightKeyCount = midiEnd - this.midiEnd;
+
+        if (leftKeyCount > 0) {
+            this.addKeysLeft(leftKeyCount);
+        }
+
+        if (rightKeyCount > 0) {
+            this.addKeysRight(rightKeyCount);
+        }
+
+        this.midiViewStart = midiStart;
+        this.midiViewEnd = midiEnd;
+        this.clearInvisibleKeys();
+    }
+
     setMidiView(midiStart: number, midiEnd: number) {
-        const viewableDiatonicRange = getDiatonicRange(midiStart, midiEnd);
+        const start = getClosestDiatonicLeft(midiStart);
+        const end = getClosestDiatonicRight(midiEnd);
+        const viewableDiatonicRange = getDiatonicRange(start, end);
         const totalDiatonicRange = getDiatonicRange(this.midiStart, this.midiEnd);
         const widthPercentage = (totalDiatonicRange / viewableDiatonicRange) * 100;
         this.setWidth(widthPercentage + '%');
@@ -63,6 +86,8 @@ export default class Renderer {
         const targetDiatonicKeyWidth = containerRect.width / viewableDiatonicRange;
         const scrollX = getDiatonicRange(this.midiStart, midiStart) * targetDiatonicKeyWidth;
         this.scrollToX(scrollX);
+        this.midiViewStart = start;
+        this.midiViewEnd = end;
     }
 
     addKeysLeft(keyCount: number) {
@@ -98,7 +123,17 @@ export default class Renderer {
     }
 
     clearInvisibleKeys() {
-        // TODO: implement
+        // TODO: we don't really need to check all keys, we can use double pointer
+        const keyElements = this.keysContainer.querySelectorAll('.piano-key');
+        keyElements.forEach(key => {
+            const midi = Number(key.dataset.midi);
+            if (midi > this.midiViewEnd || midi < this.midiViewStart) {
+                key.remove();
+            }
+        });
+
+        this.midiStart = this.midiViewStart;
+        this.midiEnd = this.midiViewEnd;
     }
 
     private constructKeysFragment(midiStart: number, midiEnd: number): DocumentFragment {
