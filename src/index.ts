@@ -1,4 +1,4 @@
-import Renderer from "./renderer";
+import Renderer from './renderer';
 
 const container = document.getElementById('root');
 if (!container) {
@@ -11,9 +11,7 @@ const renderer = new Renderer({
 });
 
 
-let zoomedIn = false;
 setInterval(() => {
-    const width = zoomedIn ? '100%' : '200%';
-    renderer.setWidth(width);
-    zoomedIn = !zoomedIn;
-}, 1000);
+    renderer.addKeysLeft(1);
+    renderer.addKeysRight(1);
+}, 2000);

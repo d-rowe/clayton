@@ -4,7 +4,7 @@ import {
     isDiatonic
 } from './TheoryUtils';
 
-const DEFAULT_MIDI_START = 49;
+const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 72;
 
 type ClickHandler = (midi: number) => void;
@@ -18,8 +18,8 @@ type Options = {
 
 export default class Renderer {
     private container: HTMLElement;
-    private pianoContainer?: HTMLDivElement;
-    private keysContainer?: HTMLDivElement;
+    private pianoContainer: HTMLDivElement;
+    private keysContainer: HTMLDivElement;
     private options: Options;
     private midiStart: number;
     private midiEnd: number;
@@ -29,7 +29,16 @@ export default class Renderer {
         this.container = options.container;
         this.midiStart = getClosestDiatonicLeft(options.midiStart ?? DEFAULT_MIDI_START);
         this.midiEnd = getClosestDiatonicRight(options.midiEnd ?? DEFAULT_MIDI_END);
-        this.constuct();
+
+        this.pianoContainer = document.createElement('div');
+        this.pianoContainer.onclick = this.onClick.bind(this);
+        this.pianoContainer.classList.add('piano-container');
+        this.keysContainer = document.createElement('div');
+        this.keysContainer.classList.add('piano-keys-container');
+        const keysFragment = this.constructKeysFragment(this.midiStart, this.midiEnd);
+        this.keysContainer.append(keysFragment);
+        this.pianoContainer.appendChild(this.keysContainer);
+        this.container.append(this.pianoContainer);
     }
 
     onClick(event: MouseEvent) {
@@ -44,6 +53,22 @@ export default class Renderer {
         }
     }
 
+    addKeysLeft(keyCount: number) {
+        const start = getClosestDiatonicLeft(this.midiStart - keyCount);
+        const end = this.midiStart;
+        const keysFragment = this.constructKeysFragment(start, end);
+        this.keysContainer.prepend(keysFragment);
+        this.midiStart = start;
+    }
+
+    addKeysRight(keyCount: number) {
+        const start = this.midiEnd;
+        const end = getClosestDiatonicRight(this.midiEnd + keyCount);
+        const keysFragment = this.constructKeysFragment(start, end);
+        this.keysContainer.append(keysFragment);
+        this.midiEnd = end;
+    }
+
     setMidiStart(midi: number) {
         this.midiStart = getClosestDiatonicLeft(midi);
     }
@@ -53,43 +78,33 @@ export default class Renderer {
     }
 
     scrollToX(x: number) {
-        if (!this.pianoContainer) {
-            throw new Error('Cannot scroll before piano has been constructed');
-        }
-
         this.pianoContainer.scrollTo(x, 0);
     }
 
     setWidth(width: string) {
-        if (!this.keysContainer) {
-            throw new Error('Cannot set width before piano has been constructed');
-        }
         this.keysContainer.style.width = width;
     }
 
-    private constuct() {
-        this.pianoContainer = document.createElement('div');
-        this.pianoContainer.onclick = this.onClick.bind(this);
-        this.pianoContainer.classList.add('piano-container');
-        this.keysContainer = document.createElement('div');
-        this.keysContainer.classList.add('piano-keys-container');
+    private constructKeysFragment(midiStart: number, midiEnd: number): DocumentFragment {
         const keysFragment = document.createDocumentFragment();
-        for (let midi = this.midiStart; midi < this.midiEnd; midi++) {
+        let lastDiatonicKeyElement = document.createElement('div');
+        const midiDiatonicStart = getClosestDiatonicLeft(midiStart);
+        const midiDiatonicEnd = getClosestDiatonicRight(midiEnd);
+
+        for (let midi = midiDiatonicStart; midi < midiDiatonicEnd; midi++) {
             if (isDiatonic(midi)) {
-                const keyElement = this.createKeyElementDiatonic(midi);
-                keysFragment.append(keyElement);
+                const diatonicKeyElement = this.createKeyElementDiatonic(midi);
+                lastDiatonicKeyElement = diatonicKeyElement;
+                keysFragment.append(diatonicKeyElement);
                 continue;
             }
 
-            // We need to append accidental keys into their respective diatonic key
-            const diatonicKey = keysFragment.lastChild as HTMLDivElement;
-            const keyElement = this.createKeyElementAccidental(midi);
-            diatonicKey.append(keyElement);
+            // We need to append accidental keys into it's respective diatonic key
+            const accidentalKeyElement = this.createKeyElementAccidental(midi);
+            lastDiatonicKeyElement.append(accidentalKeyElement);
         }
 
-        this.keysContainer.append(keysFragment);
-        this.pianoContainer.appendChild(this.keysContainer);
-        this.container.append(this.pianoContainer);
+        return keysFragment;
     }
 
     private createKeyElementGeneric(midi: number) {

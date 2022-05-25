@@ -18,3 +18,15 @@ function getClosestDiatonic(midi: number, direction: 1 | -1): number {
     }
     return getClosestDiatonic(midi + direction, direction);
 }
+
+export function getDiatonicRange(midiStart: number, midiEnd: number): number {
+    let range = 0;
+    const start = getClosestDiatonicLeft(midiStart);
+    const end = getClosestDiatonicRight(midiEnd);
+    for (let midi = start; midi < end; midi++) {
+        if (isDiatonic(midi)) {
+            range++;
+        }
+    }
+    return range;
+}
