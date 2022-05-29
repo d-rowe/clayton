@@ -7,7 +7,7 @@ if (!container) {
 
 const renderer = new Renderer({
     container,
-    onClick: console.log,
+    onKeyClick: console.log,
 });
 
 // eslint-disable-next-line

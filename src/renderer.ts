@@ -16,7 +16,7 @@ type Options = {
     container: HTMLElement;
     midiStart?: number,
     midiEnd?: number;
-    onClick?: ClickHandler;
+    onKeyClick?: ClickHandler;
 };
 
 export default class Renderer {
@@ -55,8 +55,8 @@ export default class Renderer {
             return;
         }
 
-        if (this.options.onClick) {
-            this.options.onClick(Number(midi));
+        if (this.options.onKeyClick) {
+            this.options.onKeyClick(Number(midi));
         }
     }
 
@@ -75,6 +75,7 @@ export default class Renderer {
     }
 
     setView(midiStart: number, midiEnd: number) {
+        // TODO: investigate, something here is off by a small amount
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRange(start, end);
