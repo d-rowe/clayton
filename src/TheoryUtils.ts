@@ -1,4 +1,5 @@
 const DIATONIC_PITCH_CLASSES = new Set([0, 2, 4, 5, 7, 9, 11]);
+export const DIATONIC_STEP = 2;
 
 export function isDiatonic(midi: number) {
     return DIATONIC_PITCH_CLASSES.has(midi % 12);

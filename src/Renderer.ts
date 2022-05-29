@@ -1,4 +1,5 @@
 import {
+    DIATONIC_STEP,
     getClosestDiatonicLeft,
     getClosestDiatonicRight,
     getDiatonicRange,
@@ -7,8 +8,7 @@ import {
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
-const WIDTH_TRANSITION_STYLE = 'width 200ms linear';
-const TRANSFORM_TRANSITION_STYLE = 'transform 200ms linear';
+const DEFAULT_ANIMATION_DURATION = '200ms';
 
 type ClickHandler = (midi: number) => void;
 
@@ -17,6 +17,7 @@ type Options = {
     midiStart?: number,
     midiEnd?: number;
     onKeyClick?: ClickHandler;
+    animationDuration?: string,
 };
 
 export default class Renderer {
@@ -24,6 +25,7 @@ export default class Renderer {
     private pianoContainer: HTMLDivElement;
     private keysContainer: HTMLDivElement;
     private options: Options;
+    private animationDuration: string;
     private midiStart: number;
     private midiEnd: number;
     private midiViewStart: number;
@@ -32,6 +34,7 @@ export default class Renderer {
     constructor(options: Options) {
         this.options = options;
         this.container = options.container;
+        this.animationDuration = options.animationDuration ?? DEFAULT_ANIMATION_DURATION;
         this.midiStart = getClosestDiatonicLeft(options.midiStart ?? DEFAULT_MIDI_START);
         this.midiEnd = getClosestDiatonicRight(options.midiEnd ?? DEFAULT_MIDI_END);
         this.midiViewStart = this.midiStart;
@@ -49,15 +52,12 @@ export default class Renderer {
     }
 
     onClick(event: MouseEvent) {
-        const keyElement = event.target as HTMLDivElement;
-        const { midi } = keyElement.dataset;
-        if (midi === undefined) {
+        if (!this.options.onKeyClick) {
             return;
         }
-
-        if (this.options.onKeyClick) {
-            this.options.onKeyClick(Number(midi));
-        }
+        const keyElement = event.target as HTMLDivElement;
+        const midi = this.getMidiFromKeyElement(keyElement);
+        this.options.onKeyClick(midi);
     }
 
     setRange(midiStart: number, midiEnd: number) {
@@ -75,7 +75,7 @@ export default class Renderer {
     }
 
     setView(midiStart: number, midiEnd: number) {
-        // TODO: investigate, something here is off by a small amount
+        // TODO: investigate, something here is off by a single key
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRange(start, end);
@@ -93,14 +93,14 @@ export default class Renderer {
 
     addKeysLeft(keyCount: number) {
         const start = getClosestDiatonicLeft(this.midiStart - keyCount);
-        const end = this.midiStart - 2;
+        const end = this.midiStart - DIATONIC_STEP;
         const keysFragment = this.constructKeysFragment(start, end);
         this.keysContainer.prepend(keysFragment);
         this.midiStart = start;
     }
 
     addKeysRight(keyCount: number) {
-        const start = this.midiEnd + 2;
+        const start = this.midiEnd + DIATONIC_STEP;
         const end = getClosestDiatonicRight(this.midiEnd + keyCount);
         const keysFragment = this.constructKeysFragment(start, end);
         this.keysContainer.append(keysFragment);
@@ -115,12 +115,8 @@ export default class Renderer {
         this.midiEnd = getClosestDiatonicRight(midi)
     }
 
-    setWidth(width: string) {
-        this.keysContainer.style.width = width;
-    }
-
     clearInvisibleKeys() {
-        // TODO: we don't really need to check all keys, we can use double pointer
+        // TODO: we don't really need to check all keys, we can use left/right pointers
         const keyElements = this.keysContainer.querySelectorAll('.piano-key') as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
             const midi = Number(key.dataset.midi);
@@ -177,11 +173,21 @@ export default class Renderer {
         return keyElement;
     }
 
-    enableAnimation() {
-        this.keysContainer.style.transition = WIDTH_TRANSITION_STYLE + ', ' + TRANSFORM_TRANSITION_STYLE;
+    private setWidth(width: string) {
+        this.keysContainer.style.width = width;
     }
 
-    disableAnimation() {
+    private getMidiFromKeyElement(keyElement: HTMLDivElement): number {
+        return Number(keyElement.dataset.midi);
+    }
+
+    private enableAnimation() {
+        const widthTransition = `width ${this.animationDuration} linear`;
+        const transformTransition = `transform ${this.animationDuration} linear`;
+        this.keysContainer.style.transition = `${widthTransition}, ${transformTransition}`;
+    }
+
+    private disableAnimation() {
         this.keysContainer.style.transition = '';
     }
 }

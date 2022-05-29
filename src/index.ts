@@ -1,4 +1,5 @@
-import Renderer from './renderer';
+import Renderer from './Renderer';
+import * as TheoryUtils from './TheoryUtils';
 
 const container = document.getElementById('root');
 if (!container) {
@@ -13,6 +14,9 @@ const renderer = new Renderer({
 // eslint-disable-next-line
 // @ts-ignore
 window.renderer = renderer;
+// eslint-disable-next-line
+// @ts-ignore
+window.utils = TheoryUtils;
 
 renderer.setView(60, 72);
 
