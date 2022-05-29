@@ -31,3 +31,8 @@ export function getDiatonicRange(midiStart: number, midiEnd: number): number {
     }
     return range;
 }
+
+export function getDiatonicRangeInclusive(midiStart: number, midiEnd: number): number {
+    // include start note
+    return getDiatonicRange(midiStart, midiEnd) + 1;
+}

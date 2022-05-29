@@ -3,6 +3,7 @@ import {
     getClosestDiatonicLeft,
     getClosestDiatonicRight,
     getDiatonicRange,
+    getDiatonicRangeInclusive,
     isDiatonic
 } from './TheoryUtils';
 
@@ -75,11 +76,10 @@ export default class Renderer {
     }
 
     setView(midiStart: number, midiEnd: number) {
-        // TODO: investigate, something here is off by a single key
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
-        const viewableDiatonicRange = getDiatonicRange(start, end);
-        const totalDiatonicRange = getDiatonicRange(this.midiStart, this.midiEnd);
+        const viewableDiatonicRange = getDiatonicRangeInclusive(start, end);
+        const totalDiatonicRange = getDiatonicRangeInclusive(this.midiStart, this.midiEnd);
         const widthPercentage = (totalDiatonicRange / viewableDiatonicRange) * 100;
         this.setWidth(widthPercentage + '%');
         const leftDiatonicDiff = getDiatonicRange(this.midiStart, start);
