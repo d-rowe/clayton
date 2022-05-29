@@ -16,7 +16,7 @@
     "docs": "typedoc --entryPoints src/main.ts",
     "build": "tsc -p tsconfig.json",
     "esbuild": "esbuild src/index.ts --bundle --minify --sourcemap=external --outfile=dist/index.js",
-    "esbuild:dev": "esbuild src/index.ts --bundle --watch --outfile=dist/index.js"
+    "dev": "esbuild src/index.ts --bundle --sourcemap=inline --watch --outfile=dist/index.js"
   },
   "devDependencies": {
     "@types/jest": "^26.0.21",

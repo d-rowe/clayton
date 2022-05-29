@@ -6,7 +6,9 @@ import {
 } from './TheoryUtils';
 
 const DEFAULT_MIDI_START = 48;
-const DEFAULT_MIDI_END = 72;
+const DEFAULT_MIDI_END = 84;
+const WIDTH_TRANSITION_STYLE = 'width 200ms linear';
+const TRANSFORM_TRANSITION_STYLE = 'transform 200ms linear';
 
 type ClickHandler = (midi: number) => void;
 
@@ -61,45 +63,43 @@ export default class Renderer {
     setRange(midiStart: number, midiEnd: number) {
         const leftKeyCount = this.midiStart - midiStart;
         const rightKeyCount = midiEnd - this.midiEnd;
-
         if (leftKeyCount > 0) {
             this.addKeysLeft(leftKeyCount);
         }
-
         if (rightKeyCount > 0) {
             this.addKeysRight(rightKeyCount);
         }
 
-        this.midiViewStart = midiStart;
-        this.midiViewEnd = midiEnd;
+        this.setView(midiStart, midiEnd);
         this.clearInvisibleKeys();
     }
 
-    setMidiView(midiStart: number, midiEnd: number) {
+    setView(midiStart: number, midiEnd: number) {
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRange(start, end);
         const totalDiatonicRange = getDiatonicRange(this.midiStart, this.midiEnd);
         const widthPercentage = (totalDiatonicRange / viewableDiatonicRange) * 100;
         this.setWidth(widthPercentage + '%');
-        const containerRect = this.pianoContainer.getBoundingClientRect();
-        const targetDiatonicKeyWidth = containerRect.width / viewableDiatonicRange;
-        const scrollX = getDiatonicRange(this.midiStart, midiStart) * targetDiatonicKeyWidth;
-        this.scrollToX(scrollX);
+        const leftDiatonicDiff = getDiatonicRange(this.midiStart, start);
+        if (leftDiatonicDiff >= 0) {
+            const xOffsetPercent = (leftDiatonicDiff / totalDiatonicRange) * -100;
+            this.keysContainer.style.transform = `translateX(${xOffsetPercent}%)`;
+        }
         this.midiViewStart = start;
         this.midiViewEnd = end;
     }
 
     addKeysLeft(keyCount: number) {
         const start = getClosestDiatonicLeft(this.midiStart - keyCount);
-        const end = this.midiStart;
+        const end = this.midiStart - 2;
         const keysFragment = this.constructKeysFragment(start, end);
         this.keysContainer.prepend(keysFragment);
         this.midiStart = start;
     }
 
     addKeysRight(keyCount: number) {
-        const start = this.midiEnd;
+        const start = this.midiEnd + 2;
         const end = getClosestDiatonicRight(this.midiEnd + keyCount);
         const keysFragment = this.constructKeysFragment(start, end);
         this.keysContainer.append(keysFragment);
@@ -114,26 +114,24 @@ export default class Renderer {
         this.midiEnd = getClosestDiatonicRight(midi)
     }
 
-    scrollToX(x: number) {
-        this.pianoContainer.scrollTo(x, 0);
-    }
-
     setWidth(width: string) {
         this.keysContainer.style.width = width;
     }
 
     clearInvisibleKeys() {
         // TODO: we don't really need to check all keys, we can use double pointer
-        const keyElements = this.keysContainer.querySelectorAll('.piano-key');
+        const keyElements = this.keysContainer.querySelectorAll('.piano-key') as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
             const midi = Number(key.dataset.midi);
-            if (midi > this.midiViewEnd || midi < this.midiViewStart) {
+            const isTrailingAccidental = midi === this.midiViewEnd + 1 && !isDiatonic(midi);
+            if ((midi > this.midiViewEnd || midi < this.midiViewStart) && !isTrailingAccidental) {
                 key.remove();
             }
         });
 
         this.midiStart = this.midiViewStart;
         this.midiEnd = this.midiViewEnd;
+        this.setView(this.midiStart, this.midiEnd);
     }
 
     private constructKeysFragment(midiStart: number, midiEnd: number): DocumentFragment {
@@ -141,9 +139,10 @@ export default class Renderer {
         let lastDiatonicKeyElement = document.createElement('div');
         const midiDiatonicStart = getClosestDiatonicLeft(midiStart);
         const midiDiatonicEnd = getClosestDiatonicRight(midiEnd);
+        const trailingMidiEnd = midiDiatonicEnd + 1;
 
-        for (let midi = midiDiatonicStart; midi < midiDiatonicEnd; midi++) {
-            if (isDiatonic(midi)) {
+        for (let midi = midiDiatonicStart; midi <= trailingMidiEnd; midi++) {
+            if (isDiatonic(midi) && midi !== trailingMidiEnd) {
                 const diatonicKeyElement = this.createKeyElementDiatonic(midi);
                 lastDiatonicKeyElement = diatonicKeyElement;
                 keysFragment.append(diatonicKeyElement);
@@ -177,11 +176,11 @@ export default class Renderer {
         return keyElement;
     }
 
-    enableWidthAnimation() {
-        this.keysContainer.style.transition = 'width 200ms ease-in-out';
+    enableAnimation() {
+        this.keysContainer.style.transition = WIDTH_TRANSITION_STYLE + ', ' + TRANSFORM_TRANSITION_STYLE;
     }
 
-    disableWidthAnimation() {
+    disableAnimation() {
         this.keysContainer.style.transition = '';
     }
 }

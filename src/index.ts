@@ -10,18 +10,20 @@ const renderer = new Renderer({
     onClick: console.log,
 });
 
+// eslint-disable-next-line
+// @ts-ignore
 window.renderer = renderer;
 
-(async () => {
-    while (true) {
-        await delay(1000);
-        renderer.setRange(48, 72);
-        renderer.setMidiView(48, 60);
-        await delay(1000);
-        renderer.setRange(36, 72);
-        renderer.setMidiView(48, 60);
-    }
-})();
+renderer.setView(60, 72);
+
+// (async () => {
+//     while (true) {
+//         renderer.setView(60, 72);
+//         await delay(1000);
+//         renderer.setView(48, 72);
+//         await delay(1000);
+//     }
+// })();
 
 function delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
