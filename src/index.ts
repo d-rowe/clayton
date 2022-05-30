@@ -1,4 +1,5 @@
 import Renderer from './Renderer';
+import {delay} from './utils';
 import * as TheoryUtils from './TheoryUtils';
 
 const container = document.getElementById('root');
@@ -9,6 +10,7 @@ if (!container) {
 const renderer = new Renderer({
     container,
     onKeyClick: console.log,
+    animationDuration: 2000,
 });
 
 // eslint-disable-next-line
@@ -18,17 +20,19 @@ window.renderer = renderer;
 // @ts-ignore
 window.utils = TheoryUtils;
 
-renderer.setView(60, 72);
+const ranges = [
+    [48, 72],
+    [60, 72],
+    [0, 12],
+    [12, 48],
+];
 
-// (async () => {
-//     while (true) {
-//         renderer.setView(60, 72);
-//         await delay(1000);
-//         renderer.setView(48, 72);
-//         await delay(1000);
-//     }
-// })();
-
-function delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+(async () => {
+    while (true) {
+        for (const range of ranges) {
+            const [start, end] = range;
+            await renderer.setRange(start, end);
+            await delay(1000);
+        }
+    }
+})();

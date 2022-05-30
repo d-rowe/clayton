@@ -6,10 +6,11 @@ import {
     getDiatonicRangeInclusive,
     isDiatonic
 } from './TheoryUtils';
+import { delay } from './utils';
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
-const DEFAULT_ANIMATION_DURATION = '200ms';
+const DEFAULT_ANIMATION_DURATION_MS = 200;
 
 type ClickHandler = (midi: number) => void;
 
@@ -18,7 +19,7 @@ type Options = {
     midiStart?: number,
     midiEnd?: number;
     onKeyClick?: ClickHandler;
-    animationDuration?: string,
+    animationDuration?: number,
 };
 
 export default class Renderer {
@@ -26,7 +27,7 @@ export default class Renderer {
     private pianoContainer: HTMLDivElement;
     private keysContainer: HTMLDivElement;
     private options: Options;
-    private animationDuration: string;
+    private animationDuration: number;
     private midiStart: number;
     private midiEnd: number;
     private midiViewStart: number;
@@ -35,7 +36,7 @@ export default class Renderer {
     constructor(options: Options) {
         this.options = options;
         this.container = options.container;
-        this.animationDuration = options.animationDuration ?? DEFAULT_ANIMATION_DURATION;
+        this.animationDuration = options.animationDuration ?? DEFAULT_ANIMATION_DURATION_MS;
         this.midiStart = getClosestDiatonicLeft(options.midiStart ?? DEFAULT_MIDI_START);
         this.midiEnd = getClosestDiatonicRight(options.midiEnd ?? DEFAULT_MIDI_END);
         this.midiViewStart = this.midiStart;
@@ -61,9 +62,13 @@ export default class Renderer {
         this.options.onKeyClick(midi);
     }
 
-    setRange(midiStart: number, midiEnd: number) {
-        const leftKeyCount = this.midiStart - midiStart;
-        const rightKeyCount = midiEnd - this.midiEnd;
+    async setRange(midiStart: number, midiEnd: number) {
+        const normalizedMidiStart = getClosestDiatonicLeft(midiStart);
+        const normalizedMidiEnd = getClosestDiatonicRight(midiEnd);
+        const initialMidiViewStart = this.midiViewStart;
+        const initialMidiViewEnd = this.midiViewEnd;
+        const leftKeyCount = this.midiStart - normalizedMidiStart;
+        const rightKeyCount = normalizedMidiEnd - this.midiEnd;
         if (leftKeyCount > 0) {
             this.addKeysLeft(leftKeyCount);
         }
@@ -71,7 +76,12 @@ export default class Renderer {
             this.addKeysRight(rightKeyCount);
         }
 
-        this.setView(midiStart, midiEnd);
+        this.setView(initialMidiViewStart, initialMidiViewEnd);
+        await delay(0);
+        await this.enableAnimation();
+        this.setView(normalizedMidiStart, normalizedMidiEnd);
+        await delay(this.animationDuration);
+        await this.disableAnimation();
         this.clearInvisibleKeys();
     }
 
@@ -102,7 +112,7 @@ export default class Renderer {
     addKeysRight(keyCount: number) {
         const start = this.midiEnd + DIATONIC_STEP;
         const end = getClosestDiatonicRight(this.midiEnd + keyCount);
-        const keysFragment = this.constructKeysFragment(start, end);
+        const keysFragment = this.constructKeysFragment(start, end + 1);
         this.keysContainer.append(keysFragment);
         this.midiEnd = end;
     }
@@ -136,10 +146,9 @@ export default class Renderer {
         let lastDiatonicKeyElement = document.createElement('div');
         const midiDiatonicStart = getClosestDiatonicLeft(midiStart);
         const midiDiatonicEnd = getClosestDiatonicRight(midiEnd);
-        const trailingMidiEnd = midiDiatonicEnd + 1;
 
-        for (let midi = midiDiatonicStart; midi <= trailingMidiEnd; midi++) {
-            if (isDiatonic(midi) && midi !== trailingMidiEnd) {
+        for (let midi = midiDiatonicStart; midi <= midiDiatonicEnd; midi++) {
+            if (isDiatonic(midi)) {
                 const diatonicKeyElement = this.createKeyElementDiatonic(midi);
                 lastDiatonicKeyElement = diatonicKeyElement;
                 keysFragment.append(diatonicKeyElement);
@@ -181,13 +190,16 @@ export default class Renderer {
         return Number(keyElement.dataset.midi);
     }
 
-    private enableAnimation() {
-        const widthTransition = `width ${this.animationDuration} linear`;
-        const transformTransition = `transform ${this.animationDuration} linear`;
+    private async enableAnimation() {
+        const durationText = this.animationDuration + 'ms';
+        const widthTransition = `width ${durationText} ease-in-out`;
+        const transformTransition = `transform ${durationText} ease-in-out`;
         this.keysContainer.style.transition = `${widthTransition}, ${transformTransition}`;
+        await delay(0);
     }
 
-    private disableAnimation() {
+    private async disableAnimation() {
         this.keysContainer.style.transition = '';
+        await delay(0)
     }
 }
