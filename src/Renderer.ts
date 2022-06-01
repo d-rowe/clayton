@@ -112,7 +112,7 @@ export default class Renderer {
     addKeysRight(keyCount: number) {
         const start = this.midiEnd + DIATONIC_STEP;
         const end = getClosestDiatonicRight(this.midiEnd + keyCount);
-        const keysFragment = this.constructKeysFragment(start, end + 1);
+        const keysFragment = this.constructKeysFragment(start, end);
         this.keysContainer.append(keysFragment);
         this.midiEnd = end;
     }
@@ -146,8 +146,12 @@ export default class Renderer {
         let lastDiatonicKeyElement = document.createElement('div');
         const midiDiatonicStart = getClosestDiatonicLeft(midiStart);
         const midiDiatonicEnd = getClosestDiatonicRight(midiEnd);
+        const isNextDiatonic = isDiatonic(midiDiatonicEnd + 1);
+        const trailingEnd = isNextDiatonic
+            ? midiDiatonicEnd
+            : midiDiatonicEnd + 1;
 
-        for (let midi = midiDiatonicStart; midi <= midiDiatonicEnd; midi++) {
+        for (let midi = midiDiatonicStart; midi <= trailingEnd; midi++) {
             if (isDiatonic(midi)) {
                 const diatonicKeyElement = this.createKeyElementDiatonic(midi);
                 lastDiatonicKeyElement = diatonicKeyElement;

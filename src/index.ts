@@ -23,7 +23,7 @@ window.utils = TheoryUtils;
 const ranges = [
     [48, 72],
     [60, 72],
-    [0, 12],
+    [12, 24],
     [12, 48],
 ];
 
