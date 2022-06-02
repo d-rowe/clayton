@@ -22,6 +22,8 @@ type Options = {
     animationDuration?: number,
 };
 
+type MidiRange = [start: number, end: number];
+
 export default class Renderer {
     private container: HTMLElement;
     private pianoContainer: HTMLDivElement;
@@ -87,7 +89,11 @@ export default class Renderer {
         this.clearInvisibleKeys();
     }
 
-    setViewRange(midiStart: number, midiEnd: number) {
+    getRange(): MidiRange {
+        return [this.midiStart, this.midiEnd];
+    }
+
+    private setViewRange(midiStart: number, midiEnd: number) {
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRangeInclusive(start, end);
@@ -103,7 +109,7 @@ export default class Renderer {
         this.midiViewEnd = end;
     }
 
-    addKeysLeft(keyCount: number) {
+    private addKeysLeft(keyCount: number) {
         const start = getClosestDiatonicLeft(this.midiStart - keyCount);
         const end = this.midiStart - DIATONIC_STEP;
         const keysFragment = this.constructKeysFragment(start, end);
@@ -111,7 +117,7 @@ export default class Renderer {
         this.midiStart = start;
     }
 
-    addKeysRight(keyCount: number) {
+    private addKeysRight(keyCount: number) {
         const start = this.midiEnd + DIATONIC_STEP;
         const end = getClosestDiatonicRight(this.midiEnd + keyCount);
         const keysFragment = this.constructKeysFragment(start, end);
@@ -119,15 +125,7 @@ export default class Renderer {
         this.midiEnd = end;
     }
 
-    setMidiStart(midi: number) {
-        this.midiStart = getClosestDiatonicLeft(midi);
-    }
-
-    setMidiEnd(midi: number) {
-        this.midiEnd = getClosestDiatonicRight(midi)
-    }
-
-    clearInvisibleKeys() {
+    private clearInvisibleKeys() {
         // TODO: we don't really need to check all keys, we can use left/right pointers
         const keyElements = this.keysContainer.querySelectorAll('.piano-key') as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
