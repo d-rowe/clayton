@@ -1,6 +1,5 @@
 import Renderer from './Renderer';
-import {delay} from './utils';
-import * as TheoryUtils from './TheoryUtils';
+import {delay} from './utils/promiseUtils';
 
 const container = document.getElementById('root');
 if (!container) {
@@ -13,18 +12,11 @@ const renderer = new Renderer({
     animationDuration: 2000,
 });
 
-// eslint-disable-next-line
-// @ts-ignore
-window.renderer = renderer;
-// eslint-disable-next-line
-// @ts-ignore
-window.utils = TheoryUtils;
-
 const ranges = [
-    [48, 72],
+    [48, 84],
     [60, 72],
-    [12, 24],
-    [12, 48],
+    [36, 60],
+    [24, 36],
 ];
 
 (async () => {
@@ -32,7 +24,7 @@ const ranges = [
         for (const range of ranges) {
             const [start, end] = range;
             await renderer.setRange(start, end);
-            await delay(1000);
+            await delay(250);
         }
     }
 })();

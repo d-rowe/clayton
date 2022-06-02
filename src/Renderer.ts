@@ -5,12 +5,12 @@ import {
     getDiatonicRange,
     getDiatonicRangeInclusive,
     isDiatonic
-} from './TheoryUtils';
-import { delay } from './utils';
+} from './utils/theoryUtils';
+import {delay} from './utils/promiseUtils';
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
-const DEFAULT_ANIMATION_DURATION_MS = 200;
+const DEFAULT_ANIMATION_DURATION_MS = 750;
 
 type ClickHandler = (midi: number) => void;
 
@@ -18,7 +18,7 @@ type Options = {
     container: HTMLElement;
     midiStart?: number,
     midiEnd?: number;
-    onKeyClick?: ClickHandler;
+    onKeyClick?: ClickHandler,
     animationDuration?: number,
 };
 
@@ -59,7 +59,9 @@ export default class Renderer {
         }
         const keyElement = event.target as HTMLDivElement;
         const midi = this.getMidiFromKeyElement(keyElement);
-        this.options.onKeyClick(midi);
+        if (Number.isFinite(midi)) {
+            this.options.onKeyClick(midi);
+        }
     }
 
     async setRange(midiStart: number, midiEnd: number) {
@@ -76,16 +78,16 @@ export default class Renderer {
             this.addKeysRight(rightKeyCount);
         }
 
-        this.setView(initialMidiViewStart, initialMidiViewEnd);
-        await delay(0);
+        this.setViewRange(initialMidiViewStart, initialMidiViewEnd);
+        await delay();
         await this.enableAnimation();
-        this.setView(normalizedMidiStart, normalizedMidiEnd);
+        this.setViewRange(normalizedMidiStart, normalizedMidiEnd);
         await delay(this.animationDuration);
         await this.disableAnimation();
         this.clearInvisibleKeys();
     }
 
-    setView(midiStart: number, midiEnd: number) {
+    setViewRange(midiStart: number, midiEnd: number) {
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRangeInclusive(start, end);
@@ -138,7 +140,7 @@ export default class Renderer {
 
         this.midiStart = this.midiViewStart;
         this.midiEnd = this.midiViewEnd;
-        this.setView(this.midiStart, this.midiEnd);
+        this.setViewRange(this.midiStart, this.midiEnd);
     }
 
     private constructKeysFragment(midiStart: number, midiEnd: number): DocumentFragment {
@@ -195,15 +197,12 @@ export default class Renderer {
     }
 
     private async enableAnimation() {
-        const durationText = this.animationDuration + 'ms';
-        const widthTransition = `width ${durationText} ease-in-out`;
-        const transformTransition = `transform ${durationText} ease-in-out`;
-        this.keysContainer.style.transition = `${widthTransition}, ${transformTransition}`;
-        await delay(0);
+        this.keysContainer.style.transitionDuration = this.animationDuration + 'ms';
+        await delay();
     }
 
     private async disableAnimation() {
-        this.keysContainer.style.transition = '';
-        await delay(0)
+        this.keysContainer.style.transitionDuration = '';
+        await delay()
     }
 }
