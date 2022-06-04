@@ -1,15 +1,37 @@
 import Renderer from './Renderer';
 import {delay} from './utils/promiseUtils';
+import { isDiatonic } from './utils/theoryUtils';
 
 const container = document.getElementById('root');
 if (!container) {
     throw new Error('No container');
 }
 
+// my heart goes out to anyone that reads this 🍝
+const notes = 'CDEFGAB';
+const keyLabels = new Map<number, string>();
+let currentNoteIndex = 0;
+let currentNoteLabel = '';
+for (let midi = 2; midi <= 84; midi++) {
+    const octave = Math.floor(midi / 12) - 1;
+    if (isDiatonic(midi)) {
+        if (currentNoteIndex >= notes.length - 1) {
+            currentNoteIndex = 0;
+        } else {
+            currentNoteIndex++;
+        }
+        currentNoteLabel = notes.charAt(currentNoteIndex);
+        keyLabels.set(midi, currentNoteLabel + octave);
+    } else {
+        keyLabels.set(midi, currentNoteLabel + '#' + octave);
+    }
+}
+
 const renderer = new Renderer({
     container,
     onKeyClick: console.log,
-    animationDuration: 2000,
+    keyLabels,
+    // animationDuration: 250,
 });
 
 const ranges = [
@@ -21,10 +43,9 @@ const ranges = [
 
 (async () => {
     while (true) {
-        for (const range of ranges) {
-            const [start, end] = range;
+        for (const [start, end] of ranges) {
             await renderer.setRange(start, end);
-            await delay(250);
+            await delay(1000);
         }
     }
 })();

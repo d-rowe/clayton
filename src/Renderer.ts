@@ -13,6 +13,7 @@ const DEFAULT_MIDI_END = 84;
 const DEFAULT_ANIMATION_DURATION_MS = 750;
 
 type ClickHandler = (midi: number) => void;
+type KeyLabels = Map<number, string>;
 
 type Options = {
     container: HTMLElement;
@@ -20,6 +21,7 @@ type Options = {
     midiEnd?: number;
     onKeyClick?: ClickHandler,
     animationDuration?: number,
+    keyLabels?: KeyLabels,
 };
 
 type MidiRange = [start: number, end: number];
@@ -169,6 +171,13 @@ export default class Renderer {
 
     private createKeyElementGeneric(midi: number) {
         const keyElement = document.createElement('div');
+        const label = this.options.keyLabels?.get(midi);
+        if (label) {
+            const labelElement = document.createElement('label');
+            labelElement.classList.add('piano-key-label');
+            labelElement.innerText = label;
+            keyElement.appendChild(labelElement);
+        }
         keyElement.classList.add('piano-key');
         keyElement.dataset.midi = midi.toString();
         return keyElement;
@@ -201,6 +210,6 @@ export default class Renderer {
 
     private async disableAnimation() {
         this.keysContainer.style.transitionDuration = '';
-        await delay()
+        await delay(100);
     }
 }
