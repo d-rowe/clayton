@@ -22,8 +22,6 @@ for (let midi = 2; midi <= 84; midi++) {
         }
         currentNoteLabel = notes.charAt(currentNoteIndex);
         keyLabels.set(midi, currentNoteLabel + octave);
-    } else {
-        keyLabels.set(midi, currentNoteLabel + '#' + octave);
     }
 }
 
@@ -31,11 +29,13 @@ const renderer = new Renderer({
     container,
     onKeyClick: console.log,
     keyLabels,
+    midiStart: 48,
+    midiEnd: 60,
     // animationDuration: 250,
 });
 
 const ranges = [
-    [48, 84],
+    [48, 60],
     [60, 72],
     [36, 60],
     [24, 36],
