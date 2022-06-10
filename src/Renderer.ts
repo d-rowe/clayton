@@ -6,7 +6,7 @@ import {
     getDiatonicRangeInclusive,
     isDiatonic
 } from './utils/theoryUtils';
-import {delay} from './utils/promiseUtils';
+import {deferredAnimationFrame, delay} from './utils/promiseUtils';
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
@@ -83,12 +83,14 @@ export default class Renderer {
         }
 
         this.setViewRange(initialMidiViewStart, initialMidiViewEnd);
-        await delay();
+        await deferredAnimationFrame();
         await this.enableAnimation();
         this.setViewRange(normalizedMidiStart, normalizedMidiEnd);
+        // TODO: use finish animation callback
         await delay(this.animationDuration);
         await this.disableAnimation();
         this.clearInvisibleKeys();
+        await deferredAnimationFrame();
     }
 
     getRange(): MidiRange {
@@ -205,11 +207,11 @@ export default class Renderer {
 
     private async enableAnimation() {
         this.keysContainer.style.transitionDuration = this.animationDuration + 'ms';
-        await delay();
+        await deferredAnimationFrame();
     }
 
     private async disableAnimation() {
         this.keysContainer.style.transitionDuration = '';
-        await delay(100);
+        await deferredAnimationFrame();
     }
 }
