@@ -9,6 +9,7 @@ html, body, #root {
     height: 100%;
     overflow: hidden;
     transform: translateZ(0);
+    cursor: pointer;
 }
 
 .piano-keys-container {

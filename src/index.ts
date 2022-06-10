@@ -29,12 +29,11 @@ const renderer = new Renderer({
     container,
     onKeyClick: console.log,
     keyLabels,
-    midiStart: 48,
-    midiEnd: 60,
+    midiRange: [72, 84],
     // animationDuration: 250,
 });
 
-const ranges = [
+const ranges: [number, number][] = [
     [48, 60],
     [60, 72],
     [36, 60],
@@ -43,8 +42,8 @@ const ranges = [
 
 (async () => {
     while (true) {
-        for (const [start, end] of ranges) {
-            await renderer.setRange(start, end);
+        for (const range of ranges) {
+            await renderer.setMidiRange(range);
             await delay(1000);
         }
     }

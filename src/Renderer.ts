@@ -14,17 +14,16 @@ const DEFAULT_ANIMATION_DURATION_MS = 750;
 
 type ClickHandler = (midi: number) => void;
 type KeyLabels = Map<number, string>;
+type MidiRange = [start: number, end: number];
 
 type Options = {
     container: HTMLElement;
-    midiStart?: number,
-    midiEnd?: number;
+    midiRange?: MidiRange,
     onKeyClick?: ClickHandler,
     animationDuration?: number,
     keyLabels?: KeyLabels,
 };
 
-type MidiRange = [start: number, end: number];
 
 export default class Renderer {
     private container: HTMLElement;
@@ -41,8 +40,9 @@ export default class Renderer {
         this.options = options;
         this.container = options.container;
         this.animationDuration = options.animationDuration ?? DEFAULT_ANIMATION_DURATION_MS;
-        this.midiStart = getClosestDiatonicLeft(options.midiStart ?? DEFAULT_MIDI_START);
-        this.midiEnd = getClosestDiatonicRight(options.midiEnd ?? DEFAULT_MIDI_END);
+        const [midiStart, midiEnd] = options.midiRange || [];
+        this.midiStart = getClosestDiatonicLeft(midiStart ?? DEFAULT_MIDI_START);
+        this.midiEnd = getClosestDiatonicRight(midiEnd ?? DEFAULT_MIDI_END);
         this.midiViewStart = this.midiStart;
         this.midiViewEnd = this.midiEnd;
 
@@ -68,7 +68,8 @@ export default class Renderer {
         }
     }
 
-    async setRange(midiStart: number, midiEnd: number) {
+    async setMidiRange(midiRange: MidiRange) {
+        const [midiStart, midiEnd] = midiRange;
         const normalizedMidiStart = getClosestDiatonicLeft(midiStart);
         const normalizedMidiEnd = getClosestDiatonicRight(midiEnd);
         const initialMidiViewStart = this.midiViewStart;
@@ -82,10 +83,10 @@ export default class Renderer {
             this.addKeysRight(rightKeyCount);
         }
 
-        this.setViewRange(initialMidiViewStart, initialMidiViewEnd);
+        this.setMidiViewRange([initialMidiViewStart, initialMidiViewEnd]);
         await deferredAnimationFrame();
         await this.enableAnimation();
-        this.setViewRange(normalizedMidiStart, normalizedMidiEnd);
+        this.setMidiViewRange([normalizedMidiStart, normalizedMidiEnd]);
         // TODO: use finish animation callback
         await delay(this.animationDuration);
         await this.disableAnimation();
@@ -93,11 +94,12 @@ export default class Renderer {
         await deferredAnimationFrame();
     }
 
-    getRange(): MidiRange {
+    getMidiRange(): MidiRange {
         return [this.midiStart, this.midiEnd];
     }
 
-    private setViewRange(midiStart: number, midiEnd: number) {
+    private setMidiViewRange(midiRange: MidiRange) {
+        const [midiStart, midiEnd] = midiRange;
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRangeInclusive(start, end);
@@ -142,7 +144,7 @@ export default class Renderer {
 
         this.midiStart = this.midiViewStart;
         this.midiEnd = this.midiViewEnd;
-        this.setViewRange(this.midiStart, this.midiEnd);
+        this.setMidiViewRange([this.midiStart, this.midiEnd]);
     }
 
     private constructKeysFragment(midiStart: number, midiEnd: number): DocumentFragment {
@@ -173,10 +175,14 @@ export default class Renderer {
 
     private createKeyElementGeneric(midi: number) {
         const keyElement = document.createElement('div');
+        keyElement.setAttribute('role', 'button');
         const label = this.options.keyLabels?.get(midi);
         if (label) {
             const labelElement = document.createElement('label');
             labelElement.classList.add('piano-key-label');
+            const labelId = 'key-label-' + midi;
+            labelElement.id = labelId;
+            keyElement.setAttribute('aria-labelledby', labelId);
             labelElement.innerText = label;
             keyElement.appendChild(labelElement);
         }
