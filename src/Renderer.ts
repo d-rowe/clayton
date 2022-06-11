@@ -21,7 +21,7 @@ type KeyLabels = Map<number, string>;
 type MidiRange = [start: number, end: number];
 
 type Options = {
-    container: HTMLElement;
+    container: HTMLElement | string;
     midiRange?: MidiRange,
     onKeyClick?: ClickHandler,
     animationDuration?: number,
@@ -42,13 +42,23 @@ export default class Renderer {
 
     constructor(options: Options) {
         this.options = options;
-        this.container = options.container;
         this.animationDuration = options.animationDuration ?? DEFAULT_ANIMATION_DURATION_MS;
         const [midiStart, midiEnd] = options.midiRange || [];
         this.midiStart = getClosestDiatonicLeft(midiStart ?? DEFAULT_MIDI_START);
         this.midiEnd = getClosestDiatonicRight(midiEnd ?? DEFAULT_MIDI_END);
         this.midiViewStart = this.midiStart;
         this.midiViewEnd = this.midiEnd;
+
+        const {container} = options;
+        if (typeof container === 'string') {
+            const containerElement = document.getElementById(container);
+            if (!containerElement) {
+                throw new Error(`Cannot find container element with id ${container}`);
+            }
+            this.container = containerElement;
+        } else {
+            this.container = options.container as HTMLElement;
+        }
 
         this.pianoContainer = document.createElement('div');
         this.pianoContainer.onclick = this.onClick.bind(this);
