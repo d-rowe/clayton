@@ -1,7 +1,7 @@
 /node_modules/
 /build/
 /lib/
-/dist/index.js
+/dist/*.js
 /docs/
 .idea/*
 

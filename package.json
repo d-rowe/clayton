@@ -4,9 +4,8 @@
   "description": "Boilerplate for TypeScript projects (Node.js and browser modules)",
   "author": "Daniel Rowe",
   "repository": "https://github.com/d-rowe/piano-core",
-  "main": "./dist/tsc/main.js",
+  "main": "./dist/index.js",
   "types": "./dist/tsc/main.d.ts",
-  "browser": "./dist/index.js",
   "scripts": {
     "cli": "ts-node src/cli.ts",
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
@@ -15,7 +14,7 @@
     "ts-node": "ts-node",
     "docs": "typedoc --entryPoints src/main.ts",
     "build": "esbuild src/index.ts --bundle --minify --sourcemap=external --outfile=dist/index.js",
-    "dev": "esbuild src/index.ts --bundle --sourcemap=inline --watch --outfile=dist/index.js"
+    "dev": "esbuild src/demo.ts --bundle --sourcemap=inline --watch --outfile=dist/demo.js"
   },
   "devDependencies": {
     "@types/jest": "^26.0.21",

@@ -16,7 +16,7 @@
 .piano-key {
     display: flex;
     flex-grow: 1;
-    border-radius: 5px;
+    border-radius: 2px;
     justify-content: center;
     align-items: flex-end;
 }
