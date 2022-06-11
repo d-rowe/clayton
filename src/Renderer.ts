@@ -141,7 +141,7 @@ export default class Renderer {
         // TODO: we don't really need to check all keys, we can use left/right pointers
         const keyElements = this.keysContainer.querySelectorAll('.piano-key') as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
-            const midi = Number(key.dataset.midi);
+            const midi = this.getMidiFromKeyElement(key);
             const isTrailingAccidental = midi === this.midiViewEnd + 1 && !isDiatonic(midi);
             if ((midi > this.midiViewEnd || midi < this.midiViewStart) && !isTrailingAccidental) {
                 key.remove();
