@@ -20,7 +20,7 @@ npm install piano-core
 
 You'll also need to include the piano stylesheet. You can do so by adding the following to your HTML
 ```
-<link rel="stylesheet" href="https://unpkg.com/piano-core@0.1.6/dist/piano.css">
+<link rel="stylesheet" href="https://unpkg.com/piano-core@0.1.7/dist/piano.css">
 ```
 
 ### Example usage

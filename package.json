@@ -1,6 +1,6 @@
 {
   "name": "piano-core",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Javascript piano rendering library",
   "author": "Daniel Rowe",
   "repository": "https://github.com/d-rowe/piano-core",
@@ -10,7 +10,7 @@
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
     "clean": "rm dist/**/*.js && rm dist/**/*.d.ts",
     "prepare": "npm run build",
-    "build:common": "esbuild src/index.ts --bundle --sourcemap=external --format=esm --outfile=dist/index.js",
+    "build:common": "esbuild src/index.ts --bundle --minify --format=esm --outfile=dist/index.js",
     "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.json",
     "build:demo": "esbuild src/demo.ts --bundle --minify --sourcemap=external --outfile=dist/demo.js",
     "build": "npm run build:common && npm run build:types",

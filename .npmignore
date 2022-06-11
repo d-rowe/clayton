@@ -18,3 +18,5 @@ package-lock.json
 
 /dist/demo.*
 /dist/index.html
+/dist/utils/
+/src/
