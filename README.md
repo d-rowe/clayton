@@ -1,5 +1,5 @@
 ## Piano-core
-Piano-core is a javascript piano renderer.
+Piano-core is a lightweight javascript piano renderer.
 
 A few of it's core features are:
 - Framework agnostic: written in vanilla js
