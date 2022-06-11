@@ -11,12 +11,14 @@ coverage
 .gitlab-ci.yml
 
 package-lock.json
+tsconfig.json
 /*.tgz
 /tmp*
 /mnt/
 /package/
 
 /dist/demo.*
+/dist/**/*.js.map
 /dist/index.html
 /dist/utils/
 /src/
