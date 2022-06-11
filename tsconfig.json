@@ -20,8 +20,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "types": [
-      "node",
-      "jest"
+      "node"
     ],
     "lib": [
       "ES6",
@@ -33,6 +32,5 @@
   ],
   "exclude": [
     "node_modules",
-    "**/*.test.ts"
   ]
 }

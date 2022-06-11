@@ -33,15 +33,16 @@ const renderer = new Renderer({
 });
 
 const ranges: [number, number][] = [
-    [48, 51],
-    [60, 72],
-    [36, 60],
+    [48, 59],
+    [60, 67],
+    [36, 55],
     [24, 36],
 ];
 
 (async () => {
     while (true) {
         for (const range of ranges) {
+            console.log(range);
             await renderer.setMidiRange(range);
             await delay(1000);
         }
