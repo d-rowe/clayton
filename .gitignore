@@ -2,6 +2,7 @@
 /build/
 /lib/
 /dist/*.js
+/dist/**/*.map
 /dist/**/*.d.ts
 /docs/
 .idea/*
