@@ -9,6 +9,7 @@
   "scripts": {
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
     "clean": "rm -rf node_modules",
+    "prepare": "npm run build",
     "build:common": "esbuild src/index.ts --bundle --minify --outfile=dist/index.js",
     "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.json",
     "build:demo": "esbuild src/demo.ts --bundle --minify --sourcemap=external --outfile=dist/demo.js",
