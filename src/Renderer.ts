@@ -14,7 +14,7 @@ import {
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
-const DEFAULT_ANIMATION_DURATION_MS = 750;
+const DEFAULT_ANIMATION_DURATION_MS = 250;
 
 type ClickHandler = (midi: number) => void;
 type KeyLabels = Map<number, string>;
