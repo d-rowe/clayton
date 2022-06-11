@@ -15,3 +15,6 @@ package-lock.json
 /tmp*
 /mnt/
 /package/
+
+/dist/demo.*
+/dist/index.html
