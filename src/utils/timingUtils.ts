@@ -10,3 +10,9 @@ export async function deferredAnimationFrame(): Promise<void> {
     await animationFrame();
     await delay();
 }
+
+export async function transitionEnd(element: HTMLElement): Promise<void> {
+    return new Promise(resolve => {
+        element.ontransitionend = () => resolve();
+    });
+}

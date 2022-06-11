@@ -1,3 +1,4 @@
+import { setAttributesBatch } from './utils/domUtils';
 import {
     DIATONIC_STEP,
     getClosestDiatonicLeft,
@@ -6,7 +7,10 @@ import {
     getDiatonicRangeInclusive,
     isDiatonic
 } from './utils/theoryUtils';
-import {deferredAnimationFrame, delay} from './utils/promiseUtils';
+import {
+    deferredAnimationFrame,
+    transitionEnd
+} from './utils/timingUtils';
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
@@ -87,15 +91,17 @@ export default class Renderer {
         await deferredAnimationFrame();
         await this.enableAnimation();
         this.setMidiViewRange([normalizedMidiStart, normalizedMidiEnd]);
-        // TODO: use finish animation callback
-        await delay(this.animationDuration);
+        await transitionEnd(this.keysContainer);
         await this.disableAnimation();
         this.clearInvisibleKeys();
-        await deferredAnimationFrame();
     }
 
     getMidiRange(): MidiRange {
         return [this.midiStart, this.midiEnd];
+    }
+
+    setAnimationDuration(ms: number) {
+        this.animationDuration = ms;
     }
 
     private setMidiViewRange(midiRange: MidiRange) {
@@ -175,7 +181,11 @@ export default class Renderer {
 
     private createKeyElementGeneric(midi: number) {
         const keyElement = document.createElement('div');
-        keyElement.setAttribute('role', 'button');
+        setAttributesBatch(keyElement, {
+            role: 'button',
+            tabindex: '0',
+            'aria-description': 'piano key',
+        });
         const label = this.options.keyLabels?.get(midi);
         if (label) {
             const labelElement = document.createElement('label');

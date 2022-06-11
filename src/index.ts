@@ -1,5 +1,5 @@
 import Renderer from './Renderer';
-import {delay} from './utils/promiseUtils';
+import { delay } from './utils/timingUtils';
 import { isDiatonic } from './utils/theoryUtils';
 
 const container = document.getElementById('root');
@@ -30,7 +30,7 @@ const renderer = new Renderer({
     onKeyClick: console.log,
     keyLabels,
     midiRange: [72, 84],
-    // animationDuration: 250,
+    animationDuration: 1000,
 });
 
 const ranges: [number, number][] = [
