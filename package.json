@@ -1,9 +1,9 @@
 {
-  "name": "piano-core",
-  "version": "0.1.8",
+  "name": "clayton",
+  "version": "0.1.0",
   "description": "Javascript piano rendering library",
   "author": "Daniel Rowe",
-  "repository": "https://github.com/d-rowe/piano-core",
+  "repository": "https://github.com/d-rowe/clayton",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
