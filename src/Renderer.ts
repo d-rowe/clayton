@@ -16,14 +16,13 @@ const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
 const DEFAULT_ANIMATION_DURATION_MS = 250;
 
-type ClickHandler = (midi: number) => void;
 type KeyLabels = Map<number, string>;
 type MidiRange = [start: number, end: number];
 
 type Options = {
     container: HTMLElement | string;
     midiRange?: MidiRange,
-    onKeyClick?: ClickHandler,
+    onKeyClick?: (midi: number) => void,
     animationDuration?: number,
     keyLabels?: KeyLabels,
 };
@@ -39,6 +38,8 @@ export default class Renderer {
     private midiEnd: number;
     private midiViewStart: number;
     private midiViewEnd: number;
+    private isAnimationInProgress = false;
+    private pendingMidiRange: MidiRange | null = null;
 
     constructor(options: Options) {
         this.options = options;
@@ -71,7 +72,7 @@ export default class Renderer {
         this.container.append(this.pianoContainer);
     }
 
-    onClick(event: MouseEvent) {
+    onClick(event: MouseEvent): void {
         if (!this.options.onKeyClick) {
             return;
         }
@@ -82,7 +83,13 @@ export default class Renderer {
         }
     }
 
-    async setMidiRange(midiRange: MidiRange) {
+    async setMidiRange(midiRange: MidiRange): Promise<void> {
+        if (this.isAnimationInProgress) {
+            this.pendingMidiRange = midiRange;
+            return;
+        }
+
+        this.isAnimationInProgress = true;
         const [midiStart, midiEnd] = midiRange;
         const normalizedMidiStart = getClosestDiatonicLeft(midiStart);
         const normalizedMidiEnd = getClosestDiatonicRight(midiEnd);
@@ -104,13 +111,19 @@ export default class Renderer {
         await transitionEnd(this.keysContainer);
         await this.disableAnimation();
         this.clearInvisibleKeys();
+
+        this.isAnimationInProgress = false;
+        if (this.pendingMidiRange) {
+            this.setMidiRange(this.pendingMidiRange);
+            this.pendingMidiRange = null;
+        }
     }
 
     getMidiRange(): MidiRange {
         return [this.midiStart, this.midiEnd];
     }
 
-    setAnimationDuration(ms: number) {
+    setAnimationDuration(ms: number): void {
         this.animationDuration = ms;
     }
 
