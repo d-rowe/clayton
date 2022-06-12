@@ -1,4 +1,5 @@
 import { setAttributesBatch } from './utils/domUtils';
+import createPanZoom from './utils/createPanZoom';
 import {
     DIATONIC_STEP,
     getClosestDiatonicLeft,
@@ -12,16 +13,20 @@ import {
     transitionEnd
 } from './utils/timingUtils';
 
+import type { KeyLabels } from './utils/keyLabels';
+
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
+const DEFAULT_MIDI_LIMIT_START = 2;
+const DEFAULT_MIDI_LIMIT_END = 84;
 const DEFAULT_ANIMATION_DURATION_MS = 250;
 
-type KeyLabels = Map<number, string>;
 type MidiRange = [start: number, end: number];
 
 type Options = {
     container: HTMLElement | string;
     midiRange?: MidiRange,
+    midiRangeLimit?: MidiRange,
     onKeyClick?: (midi: number) => void,
     animationDuration?: number,
     keyLabels?: KeyLabels,
@@ -36,10 +41,14 @@ export default class Renderer {
     private animationDuration: number;
     private midiStart: number;
     private midiEnd: number;
+    private midiLimitStart: number;
+    private midiLimitEnd: number;
     private midiViewStart: number;
     private midiViewEnd: number;
-    private isAnimationInProgress = false;
+    private isRangeAnimationInProgress = false;
     private pendingMidiRange: MidiRange | null = null;
+    private translateX = 0;
+    private width = 100;
 
     constructor(options: Options) {
         this.options = options;
@@ -47,10 +56,13 @@ export default class Renderer {
         const [midiStart, midiEnd] = options.midiRange || [];
         this.midiStart = getClosestDiatonicLeft(midiStart ?? DEFAULT_MIDI_START);
         this.midiEnd = getClosestDiatonicRight(midiEnd ?? DEFAULT_MIDI_END);
+        const [midiLimitStart, midiLimitEnd] = options.midiRangeLimit || [];
+        this.midiLimitStart = getClosestDiatonicLeft(midiLimitStart ?? DEFAULT_MIDI_LIMIT_START);
+        this.midiLimitEnd = getClosestDiatonicRight(midiLimitEnd ?? DEFAULT_MIDI_LIMIT_END);
         this.midiViewStart = this.midiStart;
         this.midiViewEnd = this.midiEnd;
 
-        const {container} = options;
+        const { container } = options;
         if (typeof container === 'string') {
             const containerElement = document.getElementById(container);
             if (!containerElement) {
@@ -63,6 +75,12 @@ export default class Renderer {
 
         this.pianoContainer = document.createElement('div');
         this.pianoContainer.onclick = this.onClick.bind(this);
+        this.pianoContainer.onwheel = createPanZoom({
+            onPanX: this.onPanX.bind(this),
+            onZoom: scale => console.log(scale),
+            onStart: this.onPanZoomStart.bind(this),
+            onEnd: this.commitPanZoom.bind(this),
+        });
         this.pianoContainer.classList.add('piano-container');
         this.keysContainer = document.createElement('div');
         this.keysContainer.classList.add('piano-keys-container');
@@ -72,11 +90,11 @@ export default class Renderer {
         this.container.append(this.pianoContainer);
     }
 
-    onClick(event: MouseEvent): void {
+    onClick(e: MouseEvent): void {
         if (!this.options.onKeyClick) {
             return;
         }
-        const keyElement = event.target as HTMLDivElement;
+        const keyElement = e.target as HTMLDivElement;
         const midi = this.getMidiFromKeyElement(keyElement);
         if (Number.isFinite(midi)) {
             this.options.onKeyClick(midi);
@@ -84,12 +102,39 @@ export default class Renderer {
     }
 
     async setMidiRange(midiRange: MidiRange): Promise<void> {
-        if (this.isAnimationInProgress) {
+        if (this.isRangeAnimationInProgress) {
             this.pendingMidiRange = midiRange;
             return;
         }
 
-        this.isAnimationInProgress = true;
+        this.isRangeAnimationInProgress = true;
+        const [midiStart, midiEnd] = midiRange;
+        const normalizedMidiStart = getClosestDiatonicLeft(midiStart);
+        const normalizedMidiEnd = getClosestDiatonicRight(midiEnd);
+        this.renderKeys(midiRange);
+        await deferredAnimationFrame();
+        await this.enableAnimation(this.animationDuration);
+        this.setMidiViewRange([normalizedMidiStart, normalizedMidiEnd]);
+        await transitionEnd(this.keysContainer);
+        await this.disableAnimation();
+        this.clearInvisibleKeys();
+
+        this.isRangeAnimationInProgress = false;
+        if (this.pendingMidiRange) {
+            this.setMidiRange(this.pendingMidiRange);
+            this.pendingMidiRange = null;
+        }
+    }
+
+    getMidiRange(): MidiRange {
+        return [this.midiStart, this.midiEnd];
+    }
+
+    setAnimationDuration(ms: number): void {
+        this.animationDuration = ms;
+    }
+
+    private renderKeys(midiRange: MidiRange) {
         const [midiStart, midiEnd] = midiRange;
         const normalizedMidiStart = getClosestDiatonicLeft(midiStart);
         const normalizedMidiEnd = getClosestDiatonicRight(midiEnd);
@@ -105,26 +150,41 @@ export default class Renderer {
         }
 
         this.setMidiViewRange([initialMidiViewStart, initialMidiViewEnd]);
-        await deferredAnimationFrame();
-        await this.enableAnimation();
-        this.setMidiViewRange([normalizedMidiStart, normalizedMidiEnd]);
-        await transitionEnd(this.keysContainer);
-        await this.disableAnimation();
-        this.clearInvisibleKeys();
+    }
 
-        this.isAnimationInProgress = false;
-        if (this.pendingMidiRange) {
-            this.setMidiRange(this.pendingMidiRange);
-            this.pendingMidiRange = null;
+    private commitPanZoom() {
+        // TODO: implement
+        this.setMidiRange([60, 71]);
+    }
+
+    private onPanZoomStart() {
+        if (this.isRangeAnimationInProgress) {
+            return;
         }
+        this.renderKeys([this.midiLimitStart, this.midiLimitEnd]);
+        this.enableAnimation(50);
     }
 
-    getMidiRange(): MidiRange {
-        return [this.midiStart, this.midiEnd];
+    private onPanX(panX: number) {
+        if (this.isRangeAnimationInProgress) {
+            return;
+        }
+        const translateX = this.translateX + (panX / 100);
+        const translateXMin = -1 * (100 - (1 / (this.width / 10000)));
+        if (translateX >= 0) {
+            this.setTranslateX(0)
+            return;
+        }
+        if (translateX <= translateXMin) {
+            this.setTranslateX(translateXMin);
+            return;
+        }
+        this.setTranslateX(translateX);
     }
 
-    setAnimationDuration(ms: number): void {
-        this.animationDuration = ms;
+    private setTranslateX(translateX: number) {
+        this.translateX = translateX;
+        this.keysContainer.style.transform = `translateX(${this.translateX}%)`;
     }
 
     private setMidiViewRange(midiRange: MidiRange) {
@@ -133,12 +193,10 @@ export default class Renderer {
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRangeInclusive(start, end);
         const totalDiatonicRange = getDiatonicRangeInclusive(this.midiStart, this.midiEnd);
-        const widthPercentage = (totalDiatonicRange / viewableDiatonicRange) * 100;
-        this.setWidth(widthPercentage + '%');
+        this.setWidth((totalDiatonicRange / viewableDiatonicRange) * 100);
         const leftDiatonicDiff = getDiatonicRange(this.midiStart, start);
         if (leftDiatonicDiff >= 0) {
-            const xOffsetPercent = (leftDiatonicDiff / totalDiatonicRange) * -100;
-            this.keysContainer.style.transform = `translateX(${xOffsetPercent}%)`;
+            this.setTranslateX((leftDiatonicDiff / totalDiatonicRange) * -100);
         }
         this.midiViewStart = start;
         this.midiViewEnd = end;
@@ -209,7 +267,7 @@ export default class Renderer {
             tabindex: '0',
             'aria-description': 'piano key',
         });
-        const label = this.options.keyLabels?.get(midi);
+        const label = this.options.keyLabels?.[midi];
         if (label) {
             const labelElement = document.createElement('label');
             labelElement.classList.add('piano-key-label');
@@ -236,16 +294,17 @@ export default class Renderer {
         return keyElement;
     }
 
-    private setWidth(width: string) {
-        this.keysContainer.style.width = width;
+    private setWidth(width: number) {
+        this.width = width;
+        this.keysContainer.style.width = width + '%';
     }
 
     private getMidiFromKeyElement(keyElement: HTMLDivElement): number {
         return Number(keyElement.dataset.midi);
     }
 
-    private async enableAnimation() {
-        this.keysContainer.style.transitionDuration = this.animationDuration + 'ms';
+    private async enableAnimation(duration: number) {
+        this.keysContainer.style.transitionDuration = duration + 'ms';
         await deferredAnimationFrame();
     }
 

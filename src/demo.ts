@@ -1,33 +1,16 @@
 import Renderer from './Renderer';
-import { isDiatonic } from './utils/theoryUtils';
+import {createDefaultLabels} from './utils/keyLabels';
 
 const container = document.getElementById('root');
 if (!container) {
     throw new Error('No container');
 }
 
-// my heart goes out to anyone that reads this 🍝
-const notes = 'CDEFGAB';
-const keyLabels = new Map<number, string>();
-let currentNoteIndex = 0;
-let currentNoteLabel = '';
-for (let midi = 2; midi <= 84; midi++) {
-    const octave = Math.floor(midi / 12) - 1;
-    if (isDiatonic(midi)) {
-        if (currentNoteIndex >= notes.length - 1) {
-            currentNoteIndex = 0;
-        } else {
-            currentNoteIndex++;
-        }
-        currentNoteLabel = notes.charAt(currentNoteIndex);
-        keyLabels.set(midi, currentNoteLabel + octave);
-    }
-}
 
 const renderer = new Renderer({
     container,
     onKeyClick: console.log,
-    keyLabels,
+    keyLabels: createDefaultLabels(),
     midiRange: [72, 84],
     animationDuration: 1000,
 });
@@ -40,9 +23,8 @@ const ranges: [number, number][] = [
 ];
 
 (async () => {
-    while (true) {
+    for (let i = 0; i < 9999; i++) {
         for (const range of ranges) {
-            console.log(range);
             await renderer.setMidiRange(range);
             await delay(1000);
         }
