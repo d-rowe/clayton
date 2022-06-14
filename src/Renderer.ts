@@ -6,6 +6,7 @@ import {
     getClosestDiatonicRight,
     getDiatonicRange,
     getDiatonicRangeInclusive,
+    getMidiDiatonicDistAway,
     isDiatonic
 } from './utils/theoryUtils';
 import {
@@ -47,8 +48,7 @@ export default class Renderer {
     private midiViewEnd: number;
     private isRangeAnimationInProgress = false;
     private pendingMidiRange: MidiRange | null = null;
-    private translateX = 0;
-    private width = 100;
+    private initPanZoomRange: MidiRange | null = null;
 
     constructor(options: Options) {
         this.options = options;
@@ -77,9 +77,9 @@ export default class Renderer {
         this.pianoContainer.onclick = this.onClick.bind(this);
         this.pianoContainer.onwheel = createPanZoom({
             onPanX: this.onPanX.bind(this),
-            onZoom: scale => console.log(scale),
+            onZoom: this.onZoom.bind(this),
             onStart: this.onPanZoomStart.bind(this),
-            onEnd: this.commitPanZoom.bind(this),
+            onEnd: this.onPanZoomEnd.bind(this),
         });
         this.pianoContainer.classList.add('piano-container');
         this.keysContainer = document.createElement('div');
@@ -152,43 +152,64 @@ export default class Renderer {
         this.setMidiViewRange([initialMidiViewStart, initialMidiViewEnd]);
     }
 
-    private commitPanZoom() {
-        // TODO: implement
-        this.setMidiRange([60, 71]);
-    }
-
-    private onPanZoomStart() {
+    private async onPanZoomStart() {
         if (this.isRangeAnimationInProgress) {
             return;
         }
+        this.initPanZoomRange = this.getMidiRange();
+        await this.disableAnimation();
         this.renderKeys([this.midiLimitStart, this.midiLimitEnd]);
-        this.enableAnimation(50);
+        await deferredAnimationFrame();
+        await this.enableAnimation(100);
     }
 
-    private onPanX(panX: number) {
+    private async onPanZoomEnd() {
+        this.initPanZoomRange = null;
+        await this.disableAnimation();
+        this.clearInvisibleKeys();
+    }
+
+    private async onPanX(panX: number): Promise<void> {
         if (this.isRangeAnimationInProgress) {
             return;
         }
-        const translateX = this.translateX + (panX / 100);
-        const translateXMin = -1 * (100 - (1 / (this.width / 10000)));
-        if (translateX >= 0) {
-            this.setTranslateX(0)
-            return;
+
+        const diatonicDelta = Math.round(panX / -20);
+        if (!this.initPanZoomRange) {
+            throw new Error('Cannot panzoom before panzoom initialization');
         }
-        if (translateX <= translateXMin) {
-            this.setTranslateX(translateXMin);
-            return;
-        }
-        this.setTranslateX(translateX);
+        const [initStart, initEnd] = this.initPanZoomRange;
+        this.setMidiViewRange([
+            getMidiDiatonicDistAway(initStart, diatonicDelta),
+            getMidiDiatonicDistAway(initEnd, diatonicDelta),
+        ]);
     }
 
-    private setTranslateX(translateX: number) {
-        this.translateX = translateX;
-        this.keysContainer.style.transform = `translateX(${this.translateX}%)`;
+    onZoom(scale: number): void {
+        if (this.isRangeAnimationInProgress) {
+            return;
+        }
+
+        const diatonicDelta = Math.round(-scale);
+        if (!this.initPanZoomRange) {
+            throw new Error('Cannot panzoom before panzoom initialization');
+        }
+        const [initStart, initEnd] = this.initPanZoomRange;
+        this.setMidiViewRange([
+            getMidiDiatonicDistAway(initStart, -diatonicDelta),
+            getMidiDiatonicDistAway(initEnd, diatonicDelta),
+        ]);
+    }
+
+    private translateX(translateX: number) {
+        this.keysContainer.style.transform = `translateX(${translateX}%)`;
     }
 
     private setMidiViewRange(midiRange: MidiRange) {
         const [midiStart, midiEnd] = midiRange;
+        if (midiStart < this.midiLimitStart || midiEnd > this.midiLimitEnd) {
+            return;
+        }
         const start = getClosestDiatonicLeft(midiStart);
         const end = getClosestDiatonicRight(midiEnd);
         const viewableDiatonicRange = getDiatonicRangeInclusive(start, end);
@@ -196,7 +217,7 @@ export default class Renderer {
         this.setWidth((totalDiatonicRange / viewableDiatonicRange) * 100);
         const leftDiatonicDiff = getDiatonicRange(this.midiStart, start);
         if (leftDiatonicDiff >= 0) {
-            this.setTranslateX((leftDiatonicDiff / totalDiatonicRange) * -100);
+            this.translateX((leftDiatonicDiff / totalDiatonicRange) * -100);
         }
         this.midiViewStart = start;
         this.midiViewEnd = end;
@@ -223,8 +244,8 @@ export default class Renderer {
         const keyElements = this.keysContainer.querySelectorAll('.piano-key') as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
             const midi = this.getMidiFromKeyElement(key);
-            const isTrailingAccidental = midi === this.midiViewEnd + 1 && !isDiatonic(midi);
-            if ((midi > this.midiViewEnd || midi < this.midiViewStart) && !isTrailingAccidental) {
+            const isEndingAccidental = midi === this.midiViewEnd + 1 && !isDiatonic(midi);
+            if ((midi > this.midiViewEnd || midi < this.midiViewStart) && !isEndingAccidental) {
                 key.remove();
             }
         });
