@@ -14,3 +14,5 @@ const renderer = new Renderer({
     midiRange: [60, 71],
     animationDuration: 1000,
 });
+
+console.log(renderer);

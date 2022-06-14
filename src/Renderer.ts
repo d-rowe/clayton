@@ -185,7 +185,7 @@ export default class Renderer {
         ]);
     }
 
-    onZoom(scale: number): void {
+    private onZoom(scale: number): void {
         if (this.isRangeAnimationInProgress) {
             return;
         }
@@ -316,7 +316,6 @@ export default class Renderer {
     }
 
     private setWidth(width: number) {
-        this.width = width;
         this.keysContainer.style.width = width + '%';
     }
 
