@@ -13,6 +13,7 @@ import {
     deferredAnimationFrame,
     transitionEnd
 } from './utils/timingUtils';
+import setupKeyboardController from './KeyboardController';
 
 import type { KeyLabels } from './utils/keyLabels';
 
@@ -88,6 +89,7 @@ export default class Renderer {
         this.keysContainer.append(keysFragment);
         this.pianoContainer.appendChild(this.keysContainer);
         this.container.append(this.pianoContainer);
+        setupKeyboardController(this.pianoContainer);
     }
 
     onClick(e: MouseEvent): void {
