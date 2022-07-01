@@ -1,4 +1,6 @@
-html, body, #root {
+html,
+body,
+#root {
     height: 100%;
     width: 100%;
     margin: 0;
@@ -27,10 +29,14 @@ html, body, #root {
 }
 
 .piano-key-diatonic {
-    border: 1px solid black;
+    border: 1px solid #3f3f3f;
     background-color: white;
     position: relative;
-    color: black;
+    color: #424242;
+    box-shadow:
+        -1px 0 0 rgb(255 255 255 / 80%) inset,
+        0 0 5px #ccc inset,
+        0 0 3px rgb(0 0 0 / 20%);
 }
 
 .piano-key-accidental {
@@ -39,9 +45,15 @@ html, body, #root {
     left: 70%;
     width: 60%;
     height: 60%;
-    background-color: black;
+    background-color: #424242;
     color: white;
     z-index: 1;
+    border: 2px solid #424242;
+    border-top: none;
+    box-shadow:
+        -1px -1px 2px rgb(255 255 255 / 20%) inset,
+        0 -5px 2px 3px rgb(0 0 0 / 60%) inset,
+        0 2px 4px rgb(0 0 0 / 50%)
 }
 
 .piano-key-label {
