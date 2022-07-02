@@ -300,7 +300,7 @@ export default class Renderer {
 
     private clearInvisibleKeys() {
         // TODO: we don't really need to check all keys, we can use left/right pointers
-        const keyElements = this.keysContainer.querySelectorAll('.piano-key') as NodeListOf<HTMLDivElement>;
+        const keyElements = this.keysContainer.querySelectorAll('.c-piano-key') as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
             const midi = this.getMidiFromKeyElement(key);
             const isEndingAccidental = midi === this.midiViewEnd + 1 && !isDiatonic(midi);
