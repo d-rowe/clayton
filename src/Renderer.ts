@@ -91,9 +91,9 @@ export default class Renderer {
             onStart: this.onPanZoomStart.bind(this),
             onEnd: this.onPanZoomEnd.bind(this),
         });
-        this.pianoContainer.classList.add('piano-container');
+        this.pianoContainer.classList.add('c-piano-container');
         this.keysContainer = document.createElement('div');
-        this.keysContainer.classList.add('piano-keys-container');
+        this.keysContainer.classList.add('c-piano-keys-container');
         const keysFragment = this.constructKeysFragment(this.midiStart, this.midiEnd);
         this.keysContainer.append(keysFragment);
         this.pianoContainer.appendChild(this.keysContainer);
@@ -350,14 +350,14 @@ export default class Renderer {
         const label = this.options.keyLabels?.[midi];
         if (label) {
             const labelElement = document.createElement('label');
-            labelElement.classList.add('piano-key-label');
+            labelElement.classList.add('c-piano-key-label');
             const labelId = 'key-label-' + midi;
             labelElement.id = labelId;
             keyElement.setAttribute('aria-labelledby', labelId);
             labelElement.innerText = label;
             keyElement.appendChild(labelElement);
         }
-        keyElement.classList.add('piano-key');
+        keyElement.classList.add('c-piano-key');
         keyElement.dataset.midi = midi.toString();
         this.keyReferenceByMidi.set(midi, keyElement);
         return keyElement;
@@ -365,13 +365,13 @@ export default class Renderer {
 
     private createKeyElementDiatonic(midi: number) {
         const keyElement = this.createKeyElementGeneric(midi);
-        keyElement.classList.add('piano-key-diatonic');
+        keyElement.classList.add('c-piano-key-diatonic');
         return keyElement;
     }
 
     private createKeyElementAccidental(midi: number) {
         const keyElement = this.createKeyElementGeneric(midi);
-        keyElement.classList.add('piano-key-accidental');
+        keyElement.classList.add('c-piano-key-accidental');
         return keyElement;
     }
 
