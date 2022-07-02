@@ -26,7 +26,7 @@ export default {
                 return;
             }
 
-            const keyElements = Array.from(container.querySelectorAll('.piano-key')) as HTMLDivElement[];
+            const keyElements = Array.from(container.querySelectorAll('.c-piano-key')) as HTMLDivElement[];
             const currentIndex = keyElements.findIndex(k => k === activeElement);
 
             if (currentIndex < keyElements.length - 1) {
@@ -43,7 +43,7 @@ export default {
                 return;
             }
 
-            const keyElements = Array.from(container.querySelectorAll('.piano-key')) as HTMLDivElement[];
+            const keyElements = Array.from(container.querySelectorAll('.c-piano-key')) as HTMLDivElement[];
             const currentIndex = keyElements.findIndex(k => k === activeElement);
 
             if (currentIndex > 0) {
