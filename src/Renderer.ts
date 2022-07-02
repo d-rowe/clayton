@@ -14,6 +14,7 @@ import {
     transitionEnd
 } from './utils/timingUtils';
 import KeyboardController from './KeyboardController';
+import { ensureStyleIsApplied } from './styles';
 
 import type { KeyLabels } from './utils/keyLabels';
 
@@ -29,7 +30,8 @@ type Options = {
     container: HTMLElement | string;
     midiRange?: MidiRange,
     midiRangeLimit?: MidiRange,
-    onKeyClick?: (midi: number) => void,
+    onKeyDown?: (midi: number) => void,
+    onKeyUp?: (midi: number) => void,
     animationDuration?: number,
     keyLabels?: KeyLabels,
 };
@@ -50,8 +52,12 @@ export default class Renderer {
     private isRangeAnimationInProgress = false;
     private pendingMidiRange: MidiRange | null = null;
     private initPanZoomRange: MidiRange | null = null;
+    private isMousePressed = false;
+    private activeMouseMidi?: number;
+    private keyReferenceByMidi = new Map<number, HTMLDivElement>();
 
     constructor(options: Options) {
+        ensureStyleIsApplied();
         this.options = options;
         this.animationDuration = options.animationDuration ?? DEFAULT_ANIMATION_DURATION_MS;
         const [midiStart, midiEnd] = options.midiRange || [];
@@ -75,7 +81,10 @@ export default class Renderer {
         }
 
         this.pianoContainer = document.createElement('div');
-        this.pianoContainer.onclick = this.onClick.bind(this);
+        this.pianoContainer.onmousedown = this.onMouseDown.bind(this);
+        this.pianoContainer.onmouseup = this.onMouseUp.bind(this);
+        this.pianoContainer.onmousemove = this.onMouseMove.bind(this);
+        this.pianoContainer.onmouseout = this.onMouseLeave.bind(this);
         this.pianoContainer.onwheel = createPanZoom({
             onPanX: this.onPanX.bind(this),
             onZoom: this.onZoom.bind(this),
@@ -92,15 +101,63 @@ export default class Renderer {
         KeyboardController.init(this.pianoContainer);
     }
 
-    onClick(e: MouseEvent): void {
-        if (!this.options.onKeyClick) {
+    private onMouseDown(e: MouseEvent): void {
+        e.preventDefault();
+        this.isMousePressed = true;
+        this.onMouseMove(e);
+    }
+
+    private onMouseUp(): void {
+        if (this.activeMouseMidi !== undefined) {
+            this.setKeyActive(this.activeMouseMidi, false);
+            this.options.onKeyUp?.(this.activeMouseMidi);
+        }
+        this.isMousePressed = false;
+        this.activeMouseMidi = undefined;
+    }
+
+    private onMouseLeave(): void {
+        if (this.activeMouseMidi !== undefined) {
+            this.setKeyActive(this.activeMouseMidi, false);
+            this.options.onKeyUp?.(this.activeMouseMidi);
+        }
+        this.activeMouseMidi = undefined;
+    }
+
+    private onMouseMove(e: MouseEvent): void {
+        if (!this.isMousePressed) {
             return;
         }
+
         const keyElement = e.target as HTMLDivElement;
         const midi = this.getMidiFromKeyElement(keyElement);
-        if (Number.isFinite(midi)) {
-            this.options.onKeyClick(midi);
+        if (!Number.isFinite(midi)) {
+            if (this.activeMouseMidi !== undefined) {
+                this.setKeyActive(this.activeMouseMidi, false);
+                this.options.onKeyUp?.(this.activeMouseMidi);
+            }
+            return;
         }
+
+        if (this.activeMouseMidi !== midi) {
+            if (this.activeMouseMidi !== undefined) {
+                this.setKeyActive(this.activeMouseMidi, false);
+                this.options.onKeyUp?.(this.activeMouseMidi);
+            }
+            this.setKeyActive(midi, true);
+            this.options.onKeyDown?.(midi);
+            this.activeMouseMidi = midi;
+        }
+    }
+
+    setKeyActive(midi: number, active: boolean): void {
+        const keyElement = this.keyReferenceByMidi.get(midi);
+        if (!keyElement) {
+            return;
+        }
+
+        active ? keyElement.classList.add('active')
+            : keyElement.classList.remove('active');
     }
 
     async setMidiRange(midiRange: MidiRange): Promise<void> {
@@ -302,6 +359,7 @@ export default class Renderer {
         }
         keyElement.classList.add('piano-key');
         keyElement.dataset.midi = midi.toString();
+        this.keyReferenceByMidi.set(midi, keyElement);
         return keyElement;
     }
 

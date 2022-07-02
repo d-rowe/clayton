@@ -18,11 +18,6 @@ Install npm package with
 npm install clayton-piano
 ```
 
-You'll also need to include the piano stylesheet. You can do so by adding the following to your HTML
-```
-<link rel="stylesheet" href="https://unpkg.com/clayton-piano@0.1.0/dist/piano.css">
-```
-
 ### Example usage
 
 The following example will render a piano inside of a div with id `root`. It will start by display the midi range 60-71 and after a second will begin animating to midi range 36-60 for 2s.

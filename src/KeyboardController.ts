@@ -1,6 +1,7 @@
 export default {
     init(container: HTMLDivElement): void {
         container.addEventListener('keydown', onKeyDown);
+
         const keyActions: Record<string, () => void> = {
             ArrowRight: focusNextKey,
             ArrowLeft: focusPrevKey,

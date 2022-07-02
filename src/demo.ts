@@ -9,10 +9,13 @@ if (!container) {
 
 const renderer = new Renderer({
     container,
-    onKeyClick: console.log,
+    onKeyUp: midi => console.log('Key up', midi),
+    onKeyDown: midi => console.log('Key down', midi),
     keyLabels: createDefaultLabels(),
     midiRange: [60, 71],
     animationDuration: 1000,
 });
 
-console.log(renderer);
+// eslint-disable-next-line
+// @ts-ignore
+window.renderer = renderer;
