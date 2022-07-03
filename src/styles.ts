@@ -1,3 +1,5 @@
+import { PIANO_KEY_ACCIDENTAL_CLASS, PIANO_KEY_CLASS, PIANO_KEY_DIATONIC_CLASS, PIANO_KEY_LABEL_CLASS } from "./constants";
+
 const styles = `
 .c-piano-container {
     width: 100%;
@@ -13,7 +15,7 @@ const styles = `
     transition-timing-function: ease-in-out;
 }
 
-.c-piano-key {
+.${PIANO_KEY_CLASS} {
     display: flex;
     flex-grow: 1;
     border-radius: 5px;
@@ -21,11 +23,11 @@ const styles = `
     align-items: flex-end;
 }
 
-.c-piano-key.active {
+.${PIANO_KEY_CLASS}.active {
     background-color: rgb(76, 157, 255);
 }
 
-.c-piano-key-diatonic {
+.${PIANO_KEY_DIATONIC_CLASS} {
     border: 1px solid #3f3f3f;
     background-color: white;
     position: relative;
@@ -36,14 +38,14 @@ const styles = `
         0 0 3px rgb(0 0 0 / 20%);
 }
 
-.c-piano-key-diatonic.active {
+.${PIANO_KEY_DIATONIC_CLASS}.active {
     box-shadow:
         2px 0 3px rgba(0, 0, 0, 0.2) inset,
         -5px 5px 20px rgba(0, 0, 0, 0.2) inset,
         0 0 3px rgba(0, 0, 0, 0.4);
   }
 
-.c-piano-key-accidental {
+.${PIANO_KEY_ACCIDENTAL_CLASS} {
     position: absolute;
     top: -1px;
     left: 70%;
@@ -60,14 +62,14 @@ const styles = `
         0 2px 4px rgb(0 0 0 / 50%)
 }
 
-.c-piano-key-accidental.active {
+.${PIANO_KEY_ACCIDENTAL_CLASS}.active {
     box-shadow:
         -1px -1px 2px rgba(255, 255, 255, 0.2) inset,
         0 -2px 2px 3px rgba(0, 0, 0, 0.6) inset,
         0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.c-piano-key-label {
+.${PIANO_KEY_LABEL_CLASS} {
     margin-bottom: 16px;
     font-size: large;
     font-family: sans-serif;

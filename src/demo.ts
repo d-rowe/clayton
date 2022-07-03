@@ -9,12 +9,19 @@ if (!container) {
 
 const renderer = new Renderer({
     container,
-    onKeyUp: midi => console.log('Key up', midi),
-    onKeyDown: midi => console.log('Key down', midi),
+    onKeyUp,
+    onKeyDown,
     keyLabels: createDefaultLabels(),
     midiRange: [60, 71],
-    animationDuration: 1000,
 });
+
+function onKeyDown(midi: number) {
+    renderer.setKeyColor(midi, 'red');
+}
+
+function onKeyUp(midi: number) {
+    renderer.unsetKeyColor(midi);
+}
 
 // eslint-disable-next-line
 // @ts-ignore

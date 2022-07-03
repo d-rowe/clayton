@@ -1,3 +1,5 @@
+import { PIANO_KEY_CLASS } from './constants';
+
 export default {
     init(container: HTMLDivElement): void {
         container.addEventListener('keydown', onKeyDown);
@@ -26,7 +28,7 @@ export default {
                 return;
             }
 
-            const keyElements = Array.from(container.querySelectorAll('.c-piano-key')) as HTMLDivElement[];
+            const keyElements = Array.from(container.querySelectorAll(`.${PIANO_KEY_CLASS}`)) as HTMLDivElement[];
             const currentIndex = keyElements.findIndex(k => k === activeElement);
 
             if (currentIndex < keyElements.length - 1) {
@@ -43,7 +45,7 @@ export default {
                 return;
             }
 
-            const keyElements = Array.from(container.querySelectorAll('.c-piano-key')) as HTMLDivElement[];
+            const keyElements = Array.from(container.querySelectorAll(`.${PIANO_KEY_CLASS}`)) as HTMLDivElement[];
             const currentIndex = keyElements.findIndex(k => k === activeElement);
 
             if (currentIndex > 0) {

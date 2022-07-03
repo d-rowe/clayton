@@ -14,6 +14,12 @@ import {
     transitionEnd
 } from './utils/timingUtils';
 import KeyboardController from './KeyboardController';
+import {
+    PIANO_KEY_ACCIDENTAL_CLASS,
+    PIANO_KEY_CLASS,
+    PIANO_KEY_DIATONIC_CLASS,
+    PIANO_KEY_LABEL_CLASS,
+} from './constants';
 import { ensureStyleIsApplied } from './styles';
 
 import type { KeyLabels } from './utils/keyLabels';
@@ -32,7 +38,6 @@ type Options = {
     midiRangeLimit?: MidiRange,
     onKeyDown?: (midi: number) => void,
     onKeyUp?: (midi: number) => void,
-    animationDuration?: number,
     keyLabels?: KeyLabels,
 };
 
@@ -59,7 +64,7 @@ export default class Renderer {
     constructor(options: Options) {
         ensureStyleIsApplied();
         this.options = options;
-        this.animationDuration = options.animationDuration ?? DEFAULT_ANIMATION_DURATION_MS;
+        this.animationDuration = DEFAULT_ANIMATION_DURATION_MS;
         const [midiStart, midiEnd] = options.midiRange || [];
         this.midiStart = getClosestDiatonicLeft(midiStart ?? DEFAULT_MIDI_START);
         this.midiEnd = getClosestDiatonicRight(midiEnd ?? DEFAULT_MIDI_END);
@@ -109,7 +114,7 @@ export default class Renderer {
 
     private onMouseUp(): void {
         if (this.activeMouseMidi !== undefined) {
-            this.setKeyActive(this.activeMouseMidi, false);
+            this.keyUp(this.activeMouseMidi);
             this.options.onKeyUp?.(this.activeMouseMidi);
         }
         this.isMousePressed = false;
@@ -118,7 +123,7 @@ export default class Renderer {
 
     private onMouseLeave(): void {
         if (this.activeMouseMidi !== undefined) {
-            this.setKeyActive(this.activeMouseMidi, false);
+            this.keyUp(this.activeMouseMidi);
             this.options.onKeyUp?.(this.activeMouseMidi);
         }
         this.activeMouseMidi = undefined;
@@ -133,7 +138,7 @@ export default class Renderer {
         const midi = this.getMidiFromKeyElement(keyElement);
         if (!Number.isFinite(midi)) {
             if (this.activeMouseMidi !== undefined) {
-                this.setKeyActive(this.activeMouseMidi, false);
+                this.keyUp(this.activeMouseMidi);
                 this.options.onKeyUp?.(this.activeMouseMidi);
             }
             return;
@@ -141,23 +146,47 @@ export default class Renderer {
 
         if (this.activeMouseMidi !== midi) {
             if (this.activeMouseMidi !== undefined) {
-                this.setKeyActive(this.activeMouseMidi, false);
+                this.keyUp(this.activeMouseMidi);
                 this.options.onKeyUp?.(this.activeMouseMidi);
             }
-            this.setKeyActive(midi, true);
+            this.keyDown(midi);
             this.options.onKeyDown?.(midi);
             this.activeMouseMidi = midi;
         }
     }
 
-    setKeyActive(midi: number, active: boolean): void {
+    keyDown(midi: number): void {
         const keyElement = this.keyReferenceByMidi.get(midi);
         if (!keyElement) {
             return;
         }
 
-        active ? keyElement.classList.add('active')
-            : keyElement.classList.remove('active');
+        keyElement.classList.add('active')
+    }
+
+    keyUp(midi: number): void {
+        const keyElement = this.keyReferenceByMidi.get(midi);
+        if (!keyElement) {
+            return;
+        }
+
+        keyElement.classList.remove('active')
+    }
+
+    setKeyColor(midi: number, color: string): void {
+        const keyElement = this.keyReferenceByMidi.get(midi);
+        if (!keyElement) {
+            return;
+        }
+        keyElement.style.backgroundColor = color;
+    }
+
+    unsetKeyColor(midi: number): void {
+        const keyElement = this.keyReferenceByMidi.get(midi);
+        if (!keyElement) {
+            return;
+        }
+        keyElement.style.backgroundColor = '';
     }
 
     async setMidiRange(midiRange: MidiRange): Promise<void> {
@@ -300,7 +329,7 @@ export default class Renderer {
 
     private clearInvisibleKeys() {
         // TODO: we don't really need to check all keys, we can use left/right pointers
-        const keyElements = this.keysContainer.querySelectorAll('.c-piano-key') as NodeListOf<HTMLDivElement>;
+        const keyElements = this.keysContainer.querySelectorAll(`.${PIANO_KEY_CLASS}`) as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
             const midi = this.getMidiFromKeyElement(key);
             const isEndingAccidental = midi === this.midiViewEnd + 1 && !isDiatonic(midi);
@@ -350,14 +379,14 @@ export default class Renderer {
         const label = this.options.keyLabels?.[midi];
         if (label) {
             const labelElement = document.createElement('label');
-            labelElement.classList.add('c-piano-key-label');
+            labelElement.classList.add(PIANO_KEY_LABEL_CLASS);
             const labelId = 'key-label-' + midi;
             labelElement.id = labelId;
             keyElement.setAttribute('aria-labelledby', labelId);
             labelElement.innerText = label;
             keyElement.appendChild(labelElement);
         }
-        keyElement.classList.add('c-piano-key');
+        keyElement.classList.add(PIANO_KEY_CLASS);
         keyElement.dataset.midi = midi.toString();
         this.keyReferenceByMidi.set(midi, keyElement);
         return keyElement;
@@ -365,13 +394,13 @@ export default class Renderer {
 
     private createKeyElementDiatonic(midi: number) {
         const keyElement = this.createKeyElementGeneric(midi);
-        keyElement.classList.add('c-piano-key-diatonic');
+        keyElement.classList.add(PIANO_KEY_DIATONIC_CLASS);
         return keyElement;
     }
 
     private createKeyElementAccidental(midi: number) {
         const keyElement = this.createKeyElementGeneric(midi);
-        keyElement.classList.add('c-piano-key-accidental');
+        keyElement.classList.add(PIANO_KEY_ACCIDENTAL_CLASS);
         return keyElement;
     }
 
