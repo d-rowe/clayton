@@ -20,5 +20,5 @@ tsconfig.json
 /dist/demo.*
 /dist/**/*.js.map
 /dist/index.html
-/dist/utils/
+/dist/lib/
 /src/

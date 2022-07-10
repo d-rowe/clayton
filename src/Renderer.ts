@@ -1,5 +1,5 @@
-import { setAttributesBatch } from './utils/domUtils';
-import createPanZoom from './utils/createPanZoom';
+import { setAttributesBatch } from './lib/domUtils';
+import createPanZoom from './lib/createPanZoom';
 import {
     DIATONIC_STEP,
     getClosestDiatonicLeft,
@@ -8,11 +8,11 @@ import {
     getDiatonicRangeInclusive,
     getMidiDiatonicDistAway,
     isDiatonic
-} from './utils/theoryUtils';
+} from './lib/theoryUtils';
 import {
     deferredAnimationFrame,
     transitionEnd
-} from './utils/timingUtils';
+} from './lib/timingUtils';
 import KeyboardController from './KeyboardController';
 import {
     PIANO_KEY_ACCIDENTAL_CLASS,
@@ -22,7 +22,7 @@ import {
 } from './constants';
 import { ensureStyleIsApplied } from './styles';
 
-import type { KeyLabels } from './utils/keyLabels';
+import type { KeyLabels } from './lib/keyLabels';
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
@@ -90,6 +90,9 @@ export default class Renderer {
         this.pianoContainer.onmouseup = this.onMouseUp.bind(this);
         this.pianoContainer.onmousemove = this.onMouseMove.bind(this);
         this.pianoContainer.onmouseout = this.onMouseLeave.bind(this);
+        this.pianoContainer.ontouchstart = this.onMouseDown.bind(this);
+        this.pianoContainer.ontouchend = this.onMouseUp.bind(this);
+        this.pianoContainer.ontouchmove = this.onMouseMove.bind(this);
         this.pianoContainer.onwheel = createPanZoom({
             onPanX: this.onPanX.bind(this),
             onZoom: this.onZoom.bind(this),
@@ -106,7 +109,7 @@ export default class Renderer {
         KeyboardController.init(this.pianoContainer);
     }
 
-    private onMouseDown(e: MouseEvent): void {
+    private onMouseDown(e: MouseEvent | TouchEvent): void {
         e.preventDefault();
         this.isMousePressed = true;
         this.onMouseMove(e);
@@ -129,7 +132,7 @@ export default class Renderer {
         this.activeMouseMidi = undefined;
     }
 
-    private onMouseMove(e: MouseEvent): void {
+    private onMouseMove(e: MouseEvent | TouchEvent): void {
         if (!this.isMousePressed) {
             return;
         }

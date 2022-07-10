@@ -1,5 +1,5 @@
 import Renderer from './Renderer';
-import {createDefaultLabels} from './utils/keyLabels';
+import {createDefaultLabels} from './lib/keyLabels';
 
 const container = document.getElementById('root');
 if (!container) {
@@ -9,19 +9,9 @@ if (!container) {
 
 const renderer = new Renderer({
     container,
-    onKeyUp,
-    onKeyDown,
     keyLabels: createDefaultLabels(),
     midiRange: [60, 71],
 });
-
-function onKeyDown(midi: number) {
-    renderer.setKeyColor(midi, 'red');
-}
-
-function onKeyUp(midi: number) {
-    renderer.unsetKeyColor(midi);
-}
 
 // eslint-disable-next-line
 // @ts-ignore
