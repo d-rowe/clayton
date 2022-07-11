@@ -1,4 +1,4 @@
-import { setAttributesBatch } from './lib/domUtils';
+import { setAttributes, getMidiFromKeyElement } from './lib/domUtils';
 import createPanZoom from './lib/createPanZoom';
 import {
     DIATONIC_STEP,
@@ -20,9 +20,11 @@ import {
     PIANO_KEY_DIATONIC_CLASS,
     PIANO_KEY_LABEL_CLASS,
 } from './constants';
-import { ensureStyleIsApplied } from './styles';
+import { ensureStyleIsApplied } from './styles'
+import PianoController from './PianoController';
 
 import type { KeyLabels } from './lib/keyLabels';
+import type { MidiHandler } from './constants';
 
 const DEFAULT_MIDI_START = 48;
 const DEFAULT_MIDI_END = 84;
@@ -36,8 +38,8 @@ type Options = {
     container: HTMLElement | string;
     midiRange?: MidiRange,
     midiRangeLimit?: MidiRange,
-    onKeyDown?: (midi: number) => void,
-    onKeyUp?: (midi: number) => void,
+    onNoteOn?: MidiHandler,
+    onNoteOff?: MidiHandler,
     keyLabels?: KeyLabels,
 };
 
@@ -47,6 +49,7 @@ export default class Renderer {
     private pianoContainer: HTMLDivElement;
     private keysContainer: HTMLDivElement;
     private options: Options;
+    private pianoController: PianoController;
     private animationDuration: number;
     private midiStart: number;
     private midiEnd: number;
@@ -57,8 +60,6 @@ export default class Renderer {
     private isRangeAnimationInProgress = false;
     private pendingMidiRange: MidiRange | null = null;
     private initPanZoomRange: MidiRange | null = null;
-    private isMousePressed = false;
-    private activeMouseMidi?: number;
     private keyReferenceByMidi = new Map<number, HTMLDivElement>();
 
     constructor(options: Options) {
@@ -86,13 +87,6 @@ export default class Renderer {
         }
 
         this.pianoContainer = document.createElement('div');
-        this.pianoContainer.onmousedown = this.onMouseDown.bind(this);
-        this.pianoContainer.onmouseup = this.onMouseUp.bind(this);
-        this.pianoContainer.onmousemove = this.onMouseMove.bind(this);
-        this.pianoContainer.onmouseout = this.onMouseLeave.bind(this);
-        this.pianoContainer.ontouchstart = this.onMouseDown.bind(this);
-        this.pianoContainer.ontouchend = this.onMouseUp.bind(this);
-        this.pianoContainer.ontouchmove = this.onMouseMove.bind(this);
         this.pianoContainer.onwheel = createPanZoom({
             onPanX: this.onPanX.bind(this),
             onZoom: this.onZoom.bind(this),
@@ -107,58 +101,20 @@ export default class Renderer {
         this.pianoContainer.appendChild(this.keysContainer);
         this.container.append(this.pianoContainer);
         KeyboardController.init(this.pianoContainer);
-    }
 
-    private onMouseDown(e: MouseEvent | TouchEvent): void {
-        e.preventDefault();
-        this.isMousePressed = true;
-        this.onMouseMove(e);
-    }
-
-    private onMouseUp(): void {
-        if (this.activeMouseMidi !== undefined) {
-            this.keyUp(this.activeMouseMidi);
-            this.options.onKeyUp?.(this.activeMouseMidi);
-        }
-        this.isMousePressed = false;
-        this.activeMouseMidi = undefined;
-    }
-
-    private onMouseLeave(): void {
-        if (this.activeMouseMidi !== undefined) {
-            this.keyUp(this.activeMouseMidi);
-            this.options.onKeyUp?.(this.activeMouseMidi);
-        }
-        this.activeMouseMidi = undefined;
-    }
-
-    private onMouseMove(e: MouseEvent | TouchEvent): void {
-        if (!this.isMousePressed) {
-            return;
-        }
-
-        const keyElement = e.target as HTMLDivElement;
-        const midi = this.getMidiFromKeyElement(keyElement);
-        if (!Number.isFinite(midi)) {
-            if (this.activeMouseMidi !== undefined) {
-                this.keyUp(this.activeMouseMidi);
-                this.options.onKeyUp?.(this.activeMouseMidi);
+        this.pianoController = new PianoController(this.pianoContainer, {
+            onNoteDown: midi => {
+                this.noteOn(midi);
+                this.options.onNoteOn?.(midi);
+            },
+            onNoteUp: midi => {
+                this.noteOff(midi);
+                this.options.onNoteOff?.(midi);
             }
-            return;
-        }
-
-        if (this.activeMouseMidi !== midi) {
-            if (this.activeMouseMidi !== undefined) {
-                this.keyUp(this.activeMouseMidi);
-                this.options.onKeyUp?.(this.activeMouseMidi);
-            }
-            this.keyDown(midi);
-            this.options.onKeyDown?.(midi);
-            this.activeMouseMidi = midi;
-        }
+        });
     }
 
-    keyDown(midi: number): void {
+    noteOn(midi: number): void {
         const keyElement = this.keyReferenceByMidi.get(midi);
         if (!keyElement) {
             return;
@@ -167,7 +123,7 @@ export default class Renderer {
         keyElement.classList.add('active')
     }
 
-    keyUp(midi: number): void {
+    noteOff(midi: number): void {
         const keyElement = this.keyReferenceByMidi.get(midi);
         if (!keyElement) {
             return;
@@ -225,6 +181,10 @@ export default class Renderer {
         this.animationDuration = ms;
     }
 
+    destroy(): void {
+        this.pianoController.destroy();
+    }
+
     private renderKeys(midiRange: MidiRange) {
         const [midiStart, midiEnd] = midiRange;
         const normalizedMidiStart = getClosestDiatonicLeft(midiStart);
@@ -243,6 +203,7 @@ export default class Renderer {
         this.setMidiViewRange([initialMidiViewStart, initialMidiViewEnd]);
     }
 
+    // TODO: move to PianoController
     private async onPanZoomStart() {
         if (this.isRangeAnimationInProgress) {
             return;
@@ -254,12 +215,14 @@ export default class Renderer {
         await this.enableAnimation(100);
     }
 
+    // TODO: move to PianoController
     private async onPanZoomEnd() {
         this.initPanZoomRange = null;
         await this.disableAnimation();
         this.clearInvisibleKeys();
     }
 
+    // TODO: move to PianoController
     private async onPanX(panX: number): Promise<void> {
         if (this.isRangeAnimationInProgress) {
             return;
@@ -276,6 +239,7 @@ export default class Renderer {
         ]);
     }
 
+    // TODO: move to PianoController
     private onZoom(scale: number): void {
         if (this.isRangeAnimationInProgress) {
             return;
@@ -334,7 +298,10 @@ export default class Renderer {
         // TODO: we don't really need to check all keys, we can use left/right pointers
         const keyElements = this.keysContainer.querySelectorAll(`.${PIANO_KEY_CLASS}`) as NodeListOf<HTMLDivElement>;
         keyElements.forEach(key => {
-            const midi = this.getMidiFromKeyElement(key);
+            const midi = getMidiFromKeyElement(key);
+            if (midi === null) {
+                return;
+            }
             const isEndingAccidental = midi === this.midiViewEnd + 1 && !isDiatonic(midi);
             if ((midi > this.midiViewEnd || midi < this.midiViewStart) && !isEndingAccidental) {
                 key.remove();
@@ -374,7 +341,7 @@ export default class Renderer {
 
     private createKeyElementGeneric(midi: number) {
         const keyElement = document.createElement('div');
-        setAttributesBatch(keyElement, {
+        setAttributes(keyElement, {
             role: 'button',
             tabindex: '0',
             'aria-description': 'piano key',
@@ -409,10 +376,6 @@ export default class Renderer {
 
     private setWidth(width: number) {
         this.keysContainer.style.width = width + '%';
-    }
-
-    private getMidiFromKeyElement(keyElement: HTMLDivElement): number {
-        return Number(keyElement.dataset.midi);
     }
 
     private async enableAnimation(duration: number) {
