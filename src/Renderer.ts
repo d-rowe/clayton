@@ -1,7 +1,7 @@
 import { setAttributes, getMidiFromKeyElement } from './lib/domUtils';
-import createPanZoom from './lib/createPanZoom';
 import {
     DIATONIC_STEP,
+    getAccidentalName,
     getClosestDiatonicLeft,
     getClosestDiatonicRight,
     getDiatonicRange,
@@ -87,12 +87,6 @@ export default class Renderer {
         }
 
         this.pianoContainer = document.createElement('div');
-        this.pianoContainer.onwheel = createPanZoom({
-            onPanX: this.onPanX.bind(this),
-            onZoom: this.onZoom.bind(this),
-            onStart: this.onPanZoomStart.bind(this),
-            onEnd: this.onPanZoomEnd.bind(this),
-        });
         this.pianoContainer.classList.add('c-piano-container');
         this.keysContainer = document.createElement('div');
         this.keysContainer.classList.add('c-piano-keys-container');
@@ -201,59 +195,6 @@ export default class Renderer {
         }
 
         this.setMidiViewRange([initialMidiViewStart, initialMidiViewEnd]);
-    }
-
-    // TODO: move to PianoController
-    private async onPanZoomStart() {
-        if (this.isRangeAnimationInProgress) {
-            return;
-        }
-        this.initPanZoomRange = this.getMidiRange();
-        await this.disableAnimation();
-        this.renderKeys([this.midiLimitStart, this.midiLimitEnd]);
-        await deferredAnimationFrame();
-        await this.enableAnimation(100);
-    }
-
-    // TODO: move to PianoController
-    private async onPanZoomEnd() {
-        this.initPanZoomRange = null;
-        await this.disableAnimation();
-        this.clearInvisibleKeys();
-    }
-
-    // TODO: move to PianoController
-    private async onPanX(panX: number): Promise<void> {
-        if (this.isRangeAnimationInProgress) {
-            return;
-        }
-
-        const diatonicDelta = Math.round(panX / -20);
-        if (!this.initPanZoomRange) {
-            throw new Error('Cannot panzoom before panzoom initialization');
-        }
-        const [initStart, initEnd] = this.initPanZoomRange;
-        this.setMidiViewRange([
-            getMidiDiatonicDistAway(initStart, diatonicDelta),
-            getMidiDiatonicDistAway(initEnd, diatonicDelta),
-        ]);
-    }
-
-    // TODO: move to PianoController
-    private onZoom(scale: number): void {
-        if (this.isRangeAnimationInProgress) {
-            return;
-        }
-
-        const diatonicDelta = Math.round(-scale);
-        if (!this.initPanZoomRange) {
-            throw new Error('Cannot panzoom before panzoom initialization');
-        }
-        const [initStart, initEnd] = this.initPanZoomRange;
-        this.setMidiViewRange([
-            getMidiDiatonicDistAway(initStart, -diatonicDelta),
-            getMidiDiatonicDistAway(initEnd, diatonicDelta),
-        ]);
     }
 
     private translateX(translateX: number) {
@@ -371,6 +312,10 @@ export default class Renderer {
     private createKeyElementAccidental(midi: number) {
         const keyElement = this.createKeyElementGeneric(midi);
         keyElement.classList.add(PIANO_KEY_ACCIDENTAL_CLASS);
+        const accidentalName = getAccidentalName(midi);
+        if (accidentalName) {
+            keyElement.classList.add(`key-${accidentalName}`);
+        }
         return keyElement;
     }
 

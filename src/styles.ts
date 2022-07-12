@@ -48,9 +48,8 @@ const styles = `
 .${PIANO_KEY_ACCIDENTAL_CLASS} {
     position: absolute;
     top: -1px;
-    left: 70%;
-    width: 60%;
-    height: 55%;
+    width: 50%;
+    height: 63%;
     background-color: #424242;
     color: white;
     z-index: 1;
@@ -75,6 +74,26 @@ const styles = `
     font-family: sans-serif;
     font-size: min(4vw, 1rem);
     position: absolute;
+}
+
+.c-piano-key .key-cs {
+    left: 64%;
+}
+
+.c-piano-key .key-ds {
+    left: 83%;
+}
+
+.c-piano-key .key-fs {
+    left: 62%;
+}
+
+.c-piano-key .key-gs {
+    left: 73%;
+}
+
+.c-piano-key .key-as {
+    left: 83%;
 }
 `;
 
