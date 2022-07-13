@@ -3,6 +3,7 @@ Clayton is a lightweight javascript piano renderer.
 
 A few of it's core features are:
 - Framework agnostic: written in vanilla js
+- Lightweight: zero-dependency and <4kb g-zipped
 - Accessible: screen reader support out of the box
 - Animations: animate note changes as well as keyboard range changes
 - Performant: utilizes virtualization to minimize the amount of DOM elements used
@@ -20,14 +21,15 @@ npm install clayton-piano
 
 ### Example usage
 
-The following example will render a piano inside of a div with id `root`. It will start by display the midi range 60-71 and after a second will begin animating to midi range 36-60 for 2s.
+The following example will render a piano inside of a div with id `root`. It will start by display the midi range 60-71 and after a second will begin animating to midi range 36-60 for 500ms.
 ```
 import Piano from 'clayton-piano';
 
 const piano = new Piano({
     container: 'root',
-    onKeyClick: midi => console.log('key clicked:', midi),
-    animationDuration: 2000,
+    onKeyDown: midi => console.log('key down:', midi),
+    onKeyUp: midi => console.log('key up:', midi),
+    animationDuration: 500,
     midiRange: [60, 71]
 });
 

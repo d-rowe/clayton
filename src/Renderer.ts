@@ -6,7 +6,6 @@ import {
     getClosestDiatonicRight,
     getDiatonicRange,
     getDiatonicRangeInclusive,
-    getMidiDiatonicDistAway,
     isDiatonic
 } from './lib/theoryUtils';
 import {
@@ -38,8 +37,8 @@ type Options = {
     container: HTMLElement | string;
     midiRange?: MidiRange,
     midiRangeLimit?: MidiRange,
-    onNoteOn?: MidiHandler,
-    onNoteOff?: MidiHandler,
+    onKeyDown?: MidiHandler,
+    onKeyUp?: MidiHandler,
     keyLabels?: KeyLabels,
 };
 
@@ -59,7 +58,6 @@ export default class Renderer {
     private midiViewEnd: number;
     private isRangeAnimationInProgress = false;
     private pendingMidiRange: MidiRange | null = null;
-    private initPanZoomRange: MidiRange | null = null;
     private keyReferenceByMidi = new Map<number, HTMLDivElement>();
 
     constructor(options: Options) {
@@ -97,52 +95,40 @@ export default class Renderer {
         KeyboardController.init(this.pianoContainer);
 
         this.pianoController = new PianoController(this.pianoContainer, {
-            onNoteDown: midi => {
-                this.noteOn(midi);
-                this.options.onNoteOn?.(midi);
+            onKeyDown: midi => {
+                this.keyDown(midi);
+                this.options.onKeyDown?.(midi);
             },
-            onNoteUp: midi => {
-                this.noteOff(midi);
-                this.options.onNoteOff?.(midi);
+            onKeyUp: midi => {
+                this.keyUp(midi);
+                this.options.onKeyUp?.(midi);
             }
         });
     }
 
-    noteOn(midi: number): void {
+    public keyDown(midi: number, color?: string): void {
         const keyElement = this.keyReferenceByMidi.get(midi);
         if (!keyElement) {
             return;
         }
 
-        keyElement.classList.add('active')
+        keyElement.classList.add('active');
+        if (color) {
+            this.setKeyColor(midi, color);
+        }
     }
 
-    noteOff(midi: number): void {
+    public keyUp(midi: number): void {
         const keyElement = this.keyReferenceByMidi.get(midi);
         if (!keyElement) {
             return;
         }
 
-        keyElement.classList.remove('active')
+        keyElement.classList.remove('active');
+        this.unsetKeyColor(midi);
     }
 
-    setKeyColor(midi: number, color: string): void {
-        const keyElement = this.keyReferenceByMidi.get(midi);
-        if (!keyElement) {
-            return;
-        }
-        keyElement.style.backgroundColor = color;
-    }
-
-    unsetKeyColor(midi: number): void {
-        const keyElement = this.keyReferenceByMidi.get(midi);
-        if (!keyElement) {
-            return;
-        }
-        keyElement.style.backgroundColor = '';
-    }
-
-    async setMidiRange(midiRange: MidiRange): Promise<void> {
+    public async setMidiRange(midiRange: MidiRange): Promise<void> {
         if (this.isRangeAnimationInProgress) {
             this.pendingMidiRange = midiRange;
             return;
@@ -167,16 +153,32 @@ export default class Renderer {
         }
     }
 
-    getMidiRange(): MidiRange {
+    public getMidiRange(): MidiRange {
         return [this.midiStart, this.midiEnd];
     }
 
-    setAnimationDuration(ms: number): void {
+    public setAnimationDuration(ms: number): void {
         this.animationDuration = ms;
     }
 
-    destroy(): void {
+    public destroy(): void {
         this.pianoController.destroy();
+    }
+
+    private setKeyColor(midi: number, color: string): void {
+        const keyElement = this.keyReferenceByMidi.get(midi);
+        if (!keyElement) {
+            return;
+        }
+        keyElement.style.backgroundColor = color;
+    }
+
+   private unsetKeyColor(midi: number): void {
+        const keyElement = this.keyReferenceByMidi.get(midi);
+        if (!keyElement) {
+            return;
+        }
+        keyElement.style.backgroundColor = '';
     }
 
     private renderKeys(midiRange: MidiRange) {

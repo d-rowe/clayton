@@ -2,8 +2,8 @@ import type { MidiHandler } from './constants';
 import { getMidiFromKeyElement } from './lib/domUtils';
 
 type Options = {
-    onNoteDown: MidiHandler,
-    onNoteUp: MidiHandler,
+    onKeyDown: MidiHandler,
+    onKeyUp: MidiHandler,
 };
 
 export default class PianoController {
@@ -51,7 +51,7 @@ export default class PianoController {
         this.activeMouseMidi = getMidiFromKeyElement(keyElement);
 
         if (this.activeMouseMidi !== null) {
-            this.options.onNoteDown(this.activeMouseMidi);
+            this.options.onKeyDown(this.activeMouseMidi);
         }
     }
 
@@ -69,12 +69,12 @@ export default class PianoController {
         }
 
         if (this.activeMouseMidi !== null) {
-            this.options.onNoteUp(this.activeMouseMidi);
+            this.options.onKeyUp(this.activeMouseMidi);
         }
 
         if (midi !== null) {
             this.activeMouseMidi = midi;
-            this.options.onNoteDown(midi);
+            this.options.onKeyDown(midi);
         }
     }
 
@@ -85,7 +85,7 @@ export default class PianoController {
 
     private onMouseLeave(): void {
         if (this.activeMouseMidi !== null) {
-            this.options.onNoteUp(this.activeMouseMidi);
+            this.options.onKeyUp(this.activeMouseMidi);
         }
 
         this.activeMouseMidi = null;
@@ -101,7 +101,7 @@ export default class PianoController {
         }
 
         this.touchMidiByIdentifier.set(touch.identifier, midi);
-        this.options.onNoteDown(midi);
+        this.options.onKeyDown(midi);
     }
 
     private onTouchMove(e: TouchEvent): void {
@@ -115,7 +115,7 @@ export default class PianoController {
             if (!keyElement) {
                 if (lastMidi !== undefined) {
                     this.touchMidiByIdentifier.delete(touch.identifier);
-                    this.options.onNoteUp(lastMidi);
+                    this.options.onKeyUp(lastMidi);
                 }
                 continue;
             }
@@ -125,14 +125,14 @@ export default class PianoController {
             }
 
             if (lastMidi !== undefined) {
-                this.options.onNoteUp(lastMidi);
+                this.options.onKeyUp(lastMidi);
             }
 
             if (midi === null) {
                 this.touchMidiByIdentifier.delete(touch.identifier);
             } else {
                 this.touchMidiByIdentifier.set(touch.identifier, midi);
-                this.options.onNoteDown(midi);
+                this.options.onKeyDown(midi);
             }
         }
     }
@@ -142,7 +142,7 @@ export default class PianoController {
         const midi = this.touchMidiByIdentifier.get(identifier);
 
         if (midi !== undefined) {
-            this.options.onNoteUp(midi);
+            this.options.onKeyUp(midi);
             this.touchMidiByIdentifier.delete(identifier);
         }
     }
