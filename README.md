@@ -9,8 +9,6 @@ A few of it's core features are:
 - Animations: animate note changes as well as keyboard range changes
 - Performant: utilizes virtualization to minimize the amount of DOM elements rendered
 
-It's API supports animation duration configuration and changing midi range.
-
 ### Demo
 https://clayton-piano.netlify.app/
 
@@ -30,7 +28,6 @@ const piano = new Piano({
     container: 'root',
     onKeyDown: midi => console.log('key down:', midi),
     onKeyUp: midi => console.log('key up:', midi),
-    animationDuration: 500,
     midiRange: [60, 71]
 });
 
