@@ -4,9 +4,10 @@ Clayton is a lightweight javascript piano renderer.
 A few of it's core features are:
 - Framework agnostic: written in vanilla js
 - Lightweight: zero-dependency and <4kb g-zipped
+- Touchscreen support: full multi-touch support for playing chords
 - Accessible: screen reader support out of the box
 - Animations: animate note changes as well as keyboard range changes
-- Performant: utilizes virtualization to minimize the amount of DOM elements used
+- Performant: utilizes virtualization to minimize the amount of DOM elements rendered
 
 It's API supports animation duration configuration and changing midi range.
 
