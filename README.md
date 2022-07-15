@@ -20,7 +20,7 @@ npm install clayton-piano
 
 ### Example usage
 
-The following example will render a piano inside of a div with id `root`. It will start by display the midi range 60-71 and after a second will begin animating to midi range 36-60 for 500ms.
+The following example will render a piano inside of a div with id `root`. It will start by display the midi range 60-71 and after a second will animate to midi range 36-60.
 ```
 import Piano from 'clayton-piano';
 
