@@ -6,7 +6,6 @@ if (!container) {
     throw new Error('No container');
 }
 
-
 const renderer = new Renderer({
     container,
     keyLabels: createDefaultLabels(),
