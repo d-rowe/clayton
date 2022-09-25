@@ -12,7 +12,7 @@ const renderer = new Renderer({
     midiRange: [60, 71],
 });
 
-const keyElements = Array.from(document.getElementsByClassName('c-piano-key'));
+const keyElements = Array.from(document.getElementsByClassName('c-piano-key')) as HTMLDivElement[];
 
 let lastX = 0;
 
